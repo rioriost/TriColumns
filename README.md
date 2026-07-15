@@ -34,6 +34,11 @@ app's `UserDefaults` container. The defaults are:
 - Column 2: `https://x.com/notifications`
 - Column 3: `https://x.com/home`
 
+**TriColumns > Open Sample Workspace** loads three bundled, fictional pages
+without changing those saved URLs. **Open Configured Pages** returns to the
+saved configuration. The sample workspace requires no network connection or
+third-party account.
+
 By default, non-empty columns reload every 30 minutes. Override the interval in
 seconds when running the Swift Package directly:
 
@@ -49,7 +54,6 @@ Set the value to `0` to disable automatic reload.
 - JavaScript alert, confirmation, and text-input dialogs.
 - Popup windows without replacing an existing column.
 - Native save panels for downloads and macOS handling for external URL schemes.
-- Camera and microphone prompts limited to secure X.com origins.
 - Automatic reload suppression while editing, uploading, viewing a modal, or
   playing audio or video.
 - Standard WebKit drag-and-drop and clipboard behavior.
@@ -60,9 +64,10 @@ first launch may require signing in to websites again.
 ## App Store
 
 The Xcode target uses bundle identifier `st.rio.tricolumns`, App Sandbox,
-outgoing network access, user-selected read/write file access, and camera/audio
-input entitlements. `PrivacyInfo.xcprivacy` declares local `UserDefaults` use
-and no tracking or collected data.
+outgoing network access, and user-selected read/write file access. It does not
+request camera, microphone, location, contacts, or automation access.
+`PrivacyInfo.xcprivacy` declares local `UserDefaults` use and no tracking or
+collected data.
 
 An Apple Distribution certificate and an App Store provisioning profile are
 required when exporting an archive for App Store Connect.

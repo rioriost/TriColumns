@@ -9,17 +9,16 @@
 /* Begin PBXBuildFile section */
 		122F16A9EBF02370080143FF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE4646EBE4325CD6F958179C /* Assets.xcassets */; };
 		3C0E739EE02289BD6C44FA43 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0E7DB71A141E1A9B60A5DB43 /* PrivacyInfo.xcprivacy */; };
+		A76820B5AFB9915E56A18D57 /* ReviewDemo in Resources */ = {isa = PBXBuildFile; fileRef = 38F76766039D49F092BC52B6 /* ReviewDemo */; };
 		C7AD0BDAC794276B94AD670C /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7907305D39AC2DCEE12BFC4D /* main.swift */; };
-		CF066F889456CF68FE0915EE /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 23FD315CBE8DE5DDBAD262C3 /* InfoPlist.strings */; };
 		F88292838B25643A431975D4 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BA2A5DB69423231B32189760 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0E7DB71A141E1A9B60A5DB43 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		40474B809E6D86C78991257C /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		38F76766039D49F092BC52B6 /* ReviewDemo */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ReviewDemo; path = Resources/ReviewDemo; sourceTree = SOURCE_ROOT; };
 		7907305D39AC2DCEE12BFC4D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8D7AFEDCA3812C483957CCFC /* TriColumns.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TriColumns.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		908ABD65ACCECADB36701F94 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A4488B9DDE6A3E63C9A0D906 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		ADB79010F5496E27C4B40AA1 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CE4646EBE4325CD6F958179C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -31,7 +30,7 @@
 			children = (
 				CE4646EBE4325CD6F958179C /* Assets.xcassets */,
 				0E7DB71A141E1A9B60A5DB43 /* PrivacyInfo.xcprivacy */,
-				23FD315CBE8DE5DDBAD262C3 /* InfoPlist.strings */,
+				38F76766039D49F092BC52B6 /* ReviewDemo */,
 				BA2A5DB69423231B32189760 /* Localizable.strings */,
 			);
 			path = Resources;
@@ -132,9 +131,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				122F16A9EBF02370080143FF /* Assets.xcassets in Resources */,
-				CF066F889456CF68FE0915EE /* InfoPlist.strings in Resources */,
 				F88292838B25643A431975D4 /* Localizable.strings in Resources */,
 				3C0E739EE02289BD6C44FA43 /* PrivacyInfo.xcprivacy in Resources */,
+				A76820B5AFB9915E56A18D57 /* ReviewDemo in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,15 +151,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		23FD315CBE8DE5DDBAD262C3 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				908ABD65ACCECADB36701F94 /* en */,
-				40474B809E6D86C78991257C /* ja */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		BA2A5DB69423231B32189760 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -237,7 +227,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppBundle/TriColumns.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -258,7 +248,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppBundle/TriColumns.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;

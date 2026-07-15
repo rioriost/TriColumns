@@ -20,6 +20,11 @@ targets:
     sources:
       - path: Sources/TriColumns
       - path: Resources
+        excludes:
+          - ReviewDemo
+        buildPhase: resources
+      - path: Resources/ReviewDemo
+        type: folder
         buildPhase: resources
     settings:
       base:
@@ -31,7 +36,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         ENABLE_APP_SANDBOX: YES
         GENERATE_INFOPLIST_FILE: NO
-        CURRENT_PROJECT_VERSION: 1
+        CURRENT_PROJECT_VERSION: 2
         MARKETING_VERSION: 1.0.0
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_STRICT_CONCURRENCY: complete
@@ -42,8 +47,6 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.files.user-selected.read-write: true
-        com.apple.security.device.camera: true
-        com.apple.security.device.audio-input: true
     scheme:
       gatherCoverageData: false
       testTargets: []

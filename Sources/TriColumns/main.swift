@@ -52,6 +52,66 @@ private let autoReloadInterval: TimeInterval? = {
     return max(value, 30)
 }()
 
+private let sampleURLScheme = "tricolumns-sample"
+
+private final class BundledSampleSchemeHandler: NSObject, WKURLSchemeHandler {
+    private let resourceDirectory: URL
+
+    init(resourceDirectory: URL) {
+        self.resourceDirectory = resourceDirectory.standardizedFileURL
+    }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let requestURL = urlSchemeTask.request.url else {
+            urlSchemeTask.didFailWithError(URLError(.badURL))
+            return
+        }
+
+        let relativePath = requestURL.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let fileURL = resourceDirectory.appendingPathComponent(relativePath).standardizedFileURL
+        let rootPath = resourceDirectory.path.hasSuffix("/")
+            ? resourceDirectory.path
+            : resourceDirectory.path + "/"
+
+        guard fileURL.path.hasPrefix(rootPath),
+              FileManager.default.fileExists(atPath: fileURL.path) else {
+            urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+            return
+        }
+
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let response = URLResponse(
+                url: requestURL,
+                mimeType: Self.mimeType(for: fileURL.pathExtension),
+                expectedContentLength: data.count,
+                textEncodingName: Self.isTextExtension(fileURL.pathExtension) ? "utf-8" : nil
+            )
+            urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+        } catch {
+            urlSchemeTask.didFailWithError(error)
+        }
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private static func mimeType(for pathExtension: String) -> String {
+        switch pathExtension.lowercased() {
+        case "html": return "text/html"
+        case "css": return "text/css"
+        case "js": return "application/javascript"
+        case "png": return "image/png"
+        default: return "application/octet-stream"
+        }
+    }
+
+    private static func isTextExtension(_ pathExtension: String) -> Bool {
+        ["html", "css", "js"].contains(pathExtension.lowercased())
+    }
+}
+
 @MainActor
 private final class PopupWindowController: NSWindowController, NSWindowDelegate {
     var onClose: ((PopupWindowController) -> Void)?
@@ -90,6 +150,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
     private var autoReloadTimer: Timer?
     private var popupControllers: [PopupWindowController] = []
     private var configuredAddress: String
+    private var displayAddressOverride: String?
 
     private static let reloadSafetyScript = """
         (() => {
@@ -196,9 +257,14 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if webView === self.webView {
-            if configuredAddress.isEmpty && webView.url?.absoluteString == "about:blank" {
+            if let sampleAddress = Self.sampleDisplayAddress(for: webView.url) {
+                displayAddressOverride = sampleAddress
+                addressField.stringValue = sampleAddress
+            } else if configuredAddress.isEmpty && webView.url?.absoluteString == "about:blank" {
+                displayAddressOverride = nil
                 addressField.stringValue = ""
             } else {
+                displayAddressOverride = nil
                 addressField.stringValue = webView.url?.absoluteString ?? addressField.stringValue
             }
             updateNavigationButtons()
@@ -234,7 +300,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
             return
         }
 
-        let webSchemes = ["http", "https", "file", "about", "blob", "data"]
+        let webSchemes = ["http", "https", "file", "about", "blob", "data", sampleURLScheme]
         guard let scheme = url.scheme?.lowercased(), webSchemes.contains(scheme) else {
             if navigationAction.navigationType == .linkActivated {
                 NSWorkspace.shared.open(url)
@@ -394,19 +460,6 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         }
     }
 
-    func webView(
-        _ webView: WKWebView,
-        requestMediaCapturePermissionFor origin: WKSecurityOrigin,
-        initiatedByFrame frame: WKFrameInfo,
-        type: WKMediaCaptureType,
-        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
-    ) {
-        let host = origin.host.lowercased()
-        let isTrustedHost = host == "x.com" || host.hasSuffix(".x.com") ||
-            host == "twitter.com" || host.hasSuffix(".twitter.com")
-        decisionHandler(origin.protocol == "https" && isTrustedHost ? .prompt : .deny)
-    }
-
     @objc private func goBack() {
         webView.goBack()
     }
@@ -449,11 +502,13 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         }
 
         configuredAddress = url.absoluteString
+        displayAddressOverride = nil
         webView.load(URLRequest(url: url))
     }
 
     func loadConfiguredAddress(_ address: String) {
         configuredAddress = address
+        displayAddressOverride = nil
         addressField.stringValue = address
 
         guard !address.isEmpty, let url = URL(string: address) else {
@@ -463,9 +518,27 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         webView.load(URLRequest(url: url))
     }
 
+    func loadSamplePage(_ url: URL, displayAddress: String) {
+        configuredAddress = displayAddress
+        displayAddressOverride = displayAddress
+        addressField.stringValue = displayAddress
+        webView.load(URLRequest(url: url))
+    }
+
     private func updateNavigationButtons() {
         backButton.isEnabled = webView.canGoBack
         forwardButton.isEnabled = webView.canGoForward
+    }
+
+    private static func sampleDisplayAddress(for url: URL?) -> String? {
+        guard let url,
+              url.scheme == sampleURLScheme,
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let column = components.queryItems?.first(where: { $0.name == "column" })?.value else {
+            return nil
+        }
+
+        return "tricolumns://sample/column-\(column)"
     }
 
     private func configure(_ webView: WKWebView) {
@@ -667,6 +740,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         columnStack.layer?.backgroundColor = NSColor.separatorColor.cgColor
 
         let dataStore = WKWebsiteDataStore.default()
+        let sampleDirectory = Bundle.main.resourceURL?.appendingPathComponent(
+            "ReviewDemo",
+            isDirectory: true
+        )
         let specs = ColumnPreferences.addresses.enumerated().map { index, address in
             ColumnSpec(title: L10n.format("column.title", index + 1), address: address)
         }
@@ -674,6 +751,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             let configuration = WKWebViewConfiguration()
             configuration.websiteDataStore = dataStore
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+            if let sampleDirectory {
+                configuration.setURLSchemeHandler(
+                    BundledSampleSchemeHandler(resourceDirectory: sampleDirectory),
+                    forURLScheme: sampleURLScheme
+                )
+            }
 
             let column = BrowserColumnView(spec: spec, configuration: configuration)
             column.translatesAutoresizingMaskIntoConstraints = false
@@ -700,6 +783,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
         self.window = window
+
+        if CommandLine.arguments.contains("--sample-workspace") {
+            showSampleWorkspace(nil)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -722,6 +809,65 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.center()
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func showSampleWorkspace(_ sender: Any?) {
+        guard let demoDirectory = Bundle.main.resourceURL?.appendingPathComponent(
+            "ReviewDemo",
+            isDirectory: true
+        ) else {
+            showSampleWorkspaceError()
+            return
+        }
+
+        let demoPage = demoDirectory.appendingPathComponent("demo.html")
+        guard FileManager.default.fileExists(atPath: demoPage.path) else {
+            showSampleWorkspaceError()
+            return
+        }
+
+        let language = Locale.preferredLanguages.first?.hasPrefix("ja") == true ? "ja" : "en"
+        for (index, column) in columns.enumerated() {
+            var components = URLComponents()
+            components.scheme = sampleURLScheme
+            components.host = "workspace"
+            components.path = "/demo.html"
+            components.queryItems = [
+                URLQueryItem(name: "lang", value: language),
+                URLQueryItem(name: "scenario", value: "workspace"),
+                URLQueryItem(name: "column", value: String(index + 1))
+            ]
+
+            guard let pageURL = components.url else {
+                showSampleWorkspaceError()
+                return
+            }
+
+            column.loadSamplePage(
+                pageURL,
+                displayAddress: "tricolumns://sample/column-\(index + 1)"
+            )
+        }
+    }
+
+    @objc private func restoreConfiguredPages(_ sender: Any?) {
+        for (column, address) in zip(columns, ColumnPreferences.addresses) {
+            column.loadConfiguredAddress(address)
+        }
+    }
+
+    private func showSampleWorkspaceError() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n.string("sample.failed.title")
+        alert.informativeText = L10n.string("sample.failed.message")
+        alert.addButton(withTitle: L10n.string("button.ok"))
+
+        if let window {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 
     @MainActor
@@ -749,6 +895,24 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         settingsItem.target = self
         appMenu.addItem(settingsItem)
+        appMenu.addItem(.separator())
+
+        let sampleItem = NSMenuItem(
+            title: L10n.string("menu.open_sample"),
+            action: #selector(showSampleWorkspace(_:)),
+            keyEquivalent: "d"
+        )
+        sampleItem.keyEquivalentModifierMask = [.command, .shift]
+        sampleItem.target = self
+        appMenu.addItem(sampleItem)
+
+        let restoreItem = NSMenuItem(
+            title: L10n.string("menu.restore_configured"),
+            action: #selector(restoreConfiguredPages(_:)),
+            keyEquivalent: ""
+        )
+        restoreItem.target = self
+        appMenu.addItem(restoreItem)
         appMenu.addItem(.separator())
 
         let quitItem = NSMenuItem(

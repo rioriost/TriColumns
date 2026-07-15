@@ -15,12 +15,10 @@
 The app requests only these sandbox capabilities:
 
 - outgoing network connections for web browsing;
-- user-selected file read/write access for uploads and downloads;
-- camera access for website capture requests;
-- microphone access for audio and live conversation features.
+- user-selected file read/write access for uploads and downloads.
 
-There is no incoming-network, contacts, calendar, location, automation, or
-full-disk entitlement.
+There is no incoming-network, camera, microphone, contacts, calendar, location,
+automation, or full-disk entitlement.
 
 ## Privacy
 
@@ -54,3 +52,8 @@ use X APIs, scrape content, automate engagement, impersonate Safari, or bundle
 X credentials. Users interact directly with the normal websites loaded in the
 three independent views. TriColumns is not affiliated with or endorsed by
 X Corp.
+
+For a new-app review, direct the reviewer to **TriColumns > Open Sample
+Workspace**. These bundled fictional pages demonstrate the three-column layout
+without credentials, a network connection, or third-party content. Opening the
+sample does not overwrite the saved URL configuration.

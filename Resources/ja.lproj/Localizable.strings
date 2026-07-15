@@ -1,5 +1,7 @@
 "menu.about" = "TriColumnsについて";
 "menu.settings" = "設定…";
+"menu.open_sample" = "サンプルワークスペースを開く";
+"menu.restore_configured" = "設定済みページを開く";
 "menu.quit" = "TriColumnsを終了";
 "menu.edit" = "編集";
 "menu.undo" = "取り消す";
@@ -17,3 +19,5 @@
 "button.cancel" = "キャンセル";
 "button.ok" = "OK";
 "download.failed" = "ダウンロードに失敗しました";
+"sample.failed.title" = "サンプルを開けません";
+"sample.failed.message" = "アプリに含まれるサンプルページを開けませんでした。";

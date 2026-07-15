@@ -59,18 +59,20 @@ Acceptance checks:
 - Cancelling a download leaves no partial destination file.
 - External application links do not produce a blank WebKit page.
 
-## Phase 3: Device Permissions
+## Phase 3: Least-Privilege Device Permissions
 
-Goal: support X Spaces and browser features that request capture devices.
+Goal: keep the first App Store release limited to capabilities required by its
+core three-column browsing workflow.
 
-- Add camera and microphone usage descriptions to the app bundle.
-- Allow WebKit to prompt for media capture only for secure X.com origins.
-- Deny capture requests from untrusted or insecure origins.
+- Camera and microphone capture are deferred and their entitlements are not
+  included in the App Store build.
+- File uploads and downloads remain available through explicit macOS Open and
+  Save panels.
 
 Acceptance checks:
 
-- A secure X.com media request reaches the macOS permission prompt.
-- The same request from another origin is denied.
+- The signed app has no camera or microphone entitlement or purpose string.
+- File access remains limited to locations explicitly selected by the user.
 
 ## Phase 4: Integration and Distribution
 
@@ -88,6 +90,7 @@ Safari solely through `WKWebView`:
 
 - Web Push and macOS notification integration.
 - Location permission and location-aware posting.
+- Camera and microphone capture for video calls or live audio participation.
 - Passkeys and authentication flows that reject embedded browsers.
 - Download history, progress UI, and interrupted-download resume.
 - A configurable column count beyond the fixed three-column layout.

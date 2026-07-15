@@ -1,5 +1,7 @@
 "menu.about" = "About TriColumns";
 "menu.settings" = "Settings…";
+"menu.open_sample" = "Open Sample Workspace";
+"menu.restore_configured" = "Open Configured Pages";
 "menu.quit" = "Quit TriColumns";
 "menu.edit" = "Edit";
 "menu.undo" = "Undo";
@@ -17,3 +19,5 @@
 "button.cancel" = "Cancel";
 "button.ok" = "OK";
 "download.failed" = "Download Failed";
+"sample.failed.title" = "Sample Workspace Unavailable";
+"sample.failed.message" = "The bundled sample pages could not be opened.";

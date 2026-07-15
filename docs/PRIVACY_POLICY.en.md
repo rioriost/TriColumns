@@ -1,6 +1,6 @@
 # TriColumns Privacy Policy
 
-Effective date: July 15, 2026
+Effective date: July 16, 2026
 
 TriColumns (the “App”) is a three-column web browser for macOS provided by Ryo Fujita (the “Developer”). This policy explains how information is handled when you use the App.
 
@@ -20,11 +20,9 @@ The App makes ordinary HTTPS or HTTP connections to websites that you configure 
 
 Websites displayed in the App may collect cookies, IP addresses, account information, usage data, and other information under their own privacy policies. Data handling by third-party websites is outside the scope of this policy. The App is not affiliated with or endorsed by X Corp.
 
-## 4. Camera, Microphone, and Files
+## 4. Files and Device Capabilities
 
-The App permits camera or microphone access only when a website requests it and you approve the corresponding macOS permission prompt. Web-content capture requests are currently limited to secure X/Twitter domains. Captured video or audio is provided directly to the requesting website; neither the App nor the Developer separately stores or collects it.
-
-For uploads and downloads, the App accesses only files or destinations that you explicitly select using macOS file panels.
+For uploads and downloads, the App accesses only files or destinations that you explicitly select using macOS file panels. The App does not request camera, microphone, location, contacts, or automation access.
 
 ## 5. Disclosure and Sale of Information
 

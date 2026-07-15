@@ -37,9 +37,5 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Allow camera access when a website in TriColumns requests it.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow microphone access for audio and live conversation features.</string>
 </dict>
 </plist>
