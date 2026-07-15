@@ -1,78 +1,73 @@
 # App Review Response: Guideline 2.1
 
-Paste the English section below into **App Review Information > Notes**. Replace
-the recording placeholder before resubmission.
+Replace the video placeholder, then paste only the English reply below into
+App Review and **App Review Information > Notes**.
 
-## English Notes
+## English Reply
 
-Guideline 2.1 review information for TriColumns 1.0.0 (build 2)
+Hello App Review Team,
 
-SCREEN RECORDING
-Physical-device recording: [INSERT PUBLICLY ACCESSIBLE VIDEO URL]
-The continuous recording begins with launching TriColumns on the tested Mac and
-shows the bundled sample workspace, three equal columns, window resizing,
-per-column navigation/reload controls, URL settings, and returning to the saved
-pages.
+Thank you for your review. We uploaded TriColumns 1.0.0 (build 2). It adds an
+offline sample workspace for review.
 
-TESTED DEVICE AND OS
-- Mac Studio (Mac16,9), Apple M4 Max, 128 GB memory
-- macOS 26.5.2, build 25F84
+1. SCREEN RECORDING
 
-PURPOSE AND TARGET AUDIENCE
-TriColumns is a lightweight three-column WebKit browser for macOS. It is for
-people who repeatedly monitor or compare several web pages, such as timelines,
-notifications, dashboards, documentation, or search results. It reduces window
-switching by keeping three independently navigable pages visible at equal width
-in one window.
+Physical Mac recording: [INSERT PUBLICLY ACCESSIBLE VIDEO URL]
 
-ACCESSING THE MAIN FEATURES
-1. Launch TriColumns. No TriColumns account, registration, purchase, or
-subscription is required.
-2. Choose TriColumns > Open Sample Workspace. This opens three fictional,
-bundled pages without network access or credentials and does not overwrite the
-saved URL configuration.
-3. Resize the window to see the three columns remain equal. Each column has
-Back, Forward, Reload, and URL controls.
-4. Choose TriColumns > Settings to set up to three HTTP/HTTPS URLs, then Save.
-The URLs persist across launches. Open Configured Pages returns from the sample
-to those saved URLs.
-No sample files or login credentials are required. Third-party website accounts,
-if a user chooses to visit such a site, are created and managed by that website.
+The continuous recording starts with launching TriColumns and shows the bundled
+sample workspace, three equal columns, window resizing, browser controls, and
+URL settings.
 
-ACCOUNTS, CONTENT, AND DEVICE ACCESS
-The app has no account system, paid content, purchases, subscriptions, or
-developer-hosted user-generated content. It does not provide posting, reporting,
-or blocking services of its own; those functions belong to the website being
-viewed. Build 2 does not request camera, microphone, location, contacts,
-tracking, or automation access. File uploads/downloads use the standard macOS
-Open/Save panels and only access locations explicitly selected by the user.
+2. TESTED DEVICE AND OS
 
-EXTERNAL SERVICES AND PLATFORMS
-The app uses Apple's system WebKit framework. Its core operation does not depend
-on a developer server, data provider, authentication provider, payment
-processor, analytics SDK, advertising SDK, or AI service. It connects only to
-websites entered or selected by the user. x.com pages are included in the
-initial URL defaults, but TriColumns does not use the X API, X OAuth, scraping,
-or automation and does not share Safari cookies or history.
+- Mac Studio (Mac16,9), Apple M4 Max, 128 GB
+- macOS 26.5.2, build 25F84; Software Update reported no updates available
 
-REGIONAL AVAILABILITY
-The app functions consistently in all regions. Website content and availability
-may differ according to each independent website's policies and the user's
-location.
+3. PURPOSE AND AUDIENCE
 
-REGULATED OR PROTECTED MATERIAL
-TriColumns does not operate in a regulated industry and does not bundle,
-redistribute, or claim ownership of third-party content or trademarks. It is a
-general-purpose WebKit browser and is not affiliated with or endorsed by X Corp.
+TriColumns is a lightweight three-column WebKit browser for people who monitor
+or compare multiple pages, such as dashboards, documentation, notifications,
+or search results. It reduces window switching by keeping three independently
+navigable pages visible at equal width.
 
-## 日本語参考訳
+4. ACCESS INSTRUCTIONS
 
-TriColumnsは、3つのWebページを同じ幅で並べるmacOS向け軽量WebKitブラウザです。
-アプリ独自のアカウント、課金、サブスクリプション、UGC機能はありません。
-「TriColumns > サンプルワークスペースを開く」から、通信やログインを必要としない
-架空の3ページを表示できます。この操作は保存済みURLを変更しません。
+Launch the app and choose TriColumns > Open Sample Workspace. This loads three
+fictional bundled pages without network access, credentials, or sample files.
+Resize the window or use each column's Back, Forward, Reload, and URL controls.
+Use TriColumns > Settings to save up to three HTTP/HTTPS URLs. Open Configured
+Pages returns to those URLs. The sample does not overwrite saved settings.
 
-ビルド2ではカメラ、マイク、位置情報、連絡先、トラッキング、オートメーションの
-権限を要求しません。ファイル操作はmacOS標準の選択パネルで明示的に選んだ範囲に
-限定されます。外部SDK、開発者サーバー、認証サービス、決済、広告、解析、AIは
-使用していません。表示する第三者Webサイトの地域差や規約は各サイトに依存します。
+The following requested flows are not applicable:
+
+- Accounts: TriColumns has no registration, login, or account-deletion flow.
+  Optional third-party website accounts are managed entirely by those sites.
+- Payments: There is no paid content, purchase, subscription, or feature unlock.
+- UGC: TriColumns does not host or operate a UGC or social networking service.
+  If a user opens a third-party UGC website, its standard web interface provides
+  posting, filtering, reporting, blocking, account, and moderation functions.
+  TriColumns does not replace or bypass them. The sample is fictional, read-only,
+  developer-created content and accepts no submissions.
+- Permissions: Build 2 does not request camera, microphone, location, contacts,
+  tracking, App Tracking Transparency, or automation access. Open/Save panels
+  access only files or destinations explicitly selected by the user.
+
+5. EXTERNAL SERVICES
+
+The app uses Apple's system WebKit and websites chosen by the user. It has no
+developer server, analytics, ads, AI, payment processor, or authentication
+service. x.com is included in the initial URL defaults, but the app does not use
+the X API, X OAuth, scraping, or automation and does not share Safari data.
+
+6. REGIONAL DIFFERENCES
+
+The app functions consistently in all regions. Individual website content or
+availability may vary according to that website and the user's location.
+
+7. REGULATED OR PROTECTED MATERIAL
+
+TriColumns is not in a regulated industry and does not bundle or redistribute
+third-party material or trademarks. It is a general-purpose browser and is not
+affiliated with or endorsed by X Corp.
+
+Please let us know if additional information is required.
