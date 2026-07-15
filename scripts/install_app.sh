@@ -3,29 +3,23 @@ set -eu
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DERIVED_DATA_PATH="$PROJECT_DIR/.xcode-derived"
-APP_NAME="Pseudo-tweetdeck"
-SCHEME_NAME="PseudoTweetDeck"
-BUILT_BIN="$DERIVED_DATA_PATH/Build/Products/Release/$SCHEME_NAME"
-APP_STAGING="$DERIVED_DATA_PATH/$APP_NAME.app"
+APP_NAME="TriColumns"
+SCHEME_NAME="TriColumns"
+BUILT_APP="$DERIVED_DATA_PATH/Build/Products/Release/$APP_NAME.app"
 INSTALL_PATH="/Applications/$APP_NAME.app"
 
+xcodegen generate --spec "$PROJECT_DIR/project.yml" --project "$PROJECT_DIR"
+
 xcodebuild \
+  -project "$PROJECT_DIR/TriColumns.xcodeproj" \
   -scheme "$SCHEME_NAME" \
   -configuration Release \
-  -destination "platform=macOS" \
+  -destination "platform=macOS,arch=arm64" \
   -derivedDataPath "$DERIVED_DATA_PATH" \
   build
 
-rm -rf "$APP_STAGING"
-mkdir -p "$APP_STAGING/Contents/MacOS"
-cp "$PROJECT_DIR/AppBundle/Info.plist" "$APP_STAGING/Contents/Info.plist"
-cp "$BUILT_BIN" "$APP_STAGING/Contents/MacOS/$APP_NAME"
-chmod 755 "$APP_STAGING/Contents/MacOS/$APP_NAME"
-
-codesign --force --deep --sign - "$APP_STAGING"
-
 rm -rf "$INSTALL_PATH"
-ditto "$APP_STAGING" "$INSTALL_PATH"
+ditto "$BUILT_APP" "$INSTALL_PATH"
 codesign --verify --deep --strict "$INSTALL_PATH"
 
 echo "Installed $INSTALL_PATH"

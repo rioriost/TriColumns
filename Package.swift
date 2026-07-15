@@ -3,16 +3,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "PseudoTweetDeck",
+    name: "TriColumns",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "PseudoTweetDeck", targets: ["PseudoTweetDeck"])
+        .executable(name: "TriColumns", targets: ["TriColumns"])
     ],
     targets: [
         .executableTarget(
-            name: "PseudoTweetDeck",
+            name: "TriColumns",
+            path: "Sources/TriColumns",
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("WebKit")

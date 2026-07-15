@@ -1,49 +1,78 @@
-# PseudoTweetDeck
+# TriColumns
 
-macOS native prototype that shows three x.com views in one window using WebKit (`WKWebView`).
+TriColumns is a lightweight three-column web browser for macOS. Each column is
+an independent `WKWebView`, while cookies and website data are shared within
+the app.
 
-## Run
+## Build
+
+Generate the Xcode project and build the app:
 
 ```sh
-swift run PseudoTweetDeck
+xcodegen generate
+xcodebuild -project TriColumns.xcodeproj -scheme TriColumns build
 ```
 
-## Install App
-
-Build with Xcode and install as `/Applications/Pseudo-tweetdeck.app`:
+For a local Release build installed at `/Applications/TriColumns.app`:
 
 ```sh
 scripts/install_app.sh
 ```
 
-By default, each column reloads every 5 minutes. To change the interval, set seconds with:
+The Swift Package remains available for compiler checks:
 
 ```sh
-PSEUDO_TWEETDECK_RELOAD_SECONDS=120 swift run PseudoTweetDeck
+swift build
 ```
 
-To disable automatic reload:
+## Columns
+
+Column URLs are configured from **TriColumns > Settings** and stored in the
+app's `UserDefaults` container. The defaults are:
+
+- Column 1: empty
+- Column 2: `https://x.com/notifications`
+- Column 3: `https://x.com/home`
+
+By default, non-empty columns reload every 30 minutes. Override the interval in
+seconds when running the Swift Package directly:
 
 ```sh
-PSEUDO_TWEETDECK_RELOAD_SECONDS=0 swift run PseudoTweetDeck
+TRICOLUMNS_RELOAD_SECONDS=3600 swift run TriColumns
 ```
 
-By default, `WKWebView` uses its current WebKit/macOS user agent instead of a hard-coded string. To override it:
+Set the value to `0` to disable automatic reload.
 
-```sh
-PSEUDO_TWEETDECK_USER_AGENT="Mozilla/5.0 ..." swift run PseudoTweetDeck
-```
+## Browser Integration
 
-The default columns are:
+- Native image and video file selection, including multiple selection.
+- JavaScript alert, confirmation, and text-input dialogs.
+- Popup windows without replacing an existing column.
+- Native save panels for downloads and macOS handling for external URL schemes.
+- Camera and microphone prompts limited to secure X.com origins.
+- Automatic reload suppression while editing, uploading, viewing a modal, or
+  playing audio or video.
+- Standard WebKit drag-and-drop and clipboard behavior.
 
-- `https://x.com/lists/94145057`
-- `https://x.com/notifications`
-- `https://x.com/home`
+This app uses WebKit but does not embed Safari or share Safari's cookies. The
+first launch may require signing in to websites again.
 
-This does not embed Safari itself. It uses the same WebKit engine family through `WKWebView`. Cookies are shared between the three panes inside this app, but they are not Safari's normal browser cookies, so the first launch may require signing in to x.com.
+## App Store
 
-## Notes
+The Xcode target uses bundle identifier `st.rio.tricolumns`, App Sandbox,
+outgoing network access, user-selected read/write file access, and camera/audio
+input entitlements. `PrivacyInfo.xcprivacy` declares local `UserDefaults` use
+and no tracking or collected data.
 
-- A plain web app with three `iframe` panes is not a good fit because x.com prevents being embedded by other sites.
-- A Chrome-based version is possible with Electron, using separate web contents in one window.
-- Safari App Extensions cannot freely compose multiple Safari pages into one custom window.
+An Apple Distribution certificate and an App Store provisioning profile are
+required when exporting an archive for App Store Connect.
+
+Privacy policies: [日本語](docs/PRIVACY_POLICY.md) / [English](docs/PRIVACY_POLICY.en.md)
+
+## Design
+
+See [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+
+## License
+
+TriColumns is released under the [MIT License](LICENSE).

@@ -1,0 +1,2 @@
+"NSCameraUsageDescription" = "Allow camera access when a website in TriColumns requests it.";
+"NSMicrophoneUsageDescription" = "Allow microphone access for audio and live conversation features.";
