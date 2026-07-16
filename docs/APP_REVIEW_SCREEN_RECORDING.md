@@ -6,7 +6,7 @@
 - Keep the Mac model and OS details in App Review Notes; the requested recording
   itself should begin with launching the app.
 - Hide notifications and unrelated personal information before recording.
-- Use build `1.0.0 (2)` and keep the entire TriColumns window visible.
+- Use build `1.0.1 (3)` and keep the entire TriColumns window visible.
 - Do not edit the recording in a way that obscures the continuous user flow.
 
 ## Suggested Flow

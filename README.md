@@ -56,6 +56,9 @@ Set the value to `0` to disable automatic reload.
 - Native save panels for downloads and macOS handling for external URL schemes.
 - Automatic reload suppression while editing, uploading, viewing a modal, or
   playing audio or video.
+- On X.com, an additional upward scroll at the top activates X's visible
+  **See new posts** control, similar to pull-to-refresh on iOS. It does nothing
+  when no buffered posts are available.
 - Standard WebKit drag-and-drop and clipboard behavior.
 
 This app uses WebKit but does not embed Safari or share Safari's cookies. The

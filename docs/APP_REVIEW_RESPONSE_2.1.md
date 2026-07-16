@@ -7,8 +7,8 @@ App Review and **App Review Information > Notes**.
 
 Hello App Review Team,
 
-Thank you for your review. We uploaded TriColumns 1.0.0 (build 2). It adds an
-offline sample workspace for review.
+Thank you for your review. This submission uses TriColumns 1.0.1 (build 3),
+which includes an offline sample workspace for review.
 
 1. SCREEN RECORDING
 
@@ -37,6 +37,8 @@ fictional bundled pages without network access, credentials, or sample files.
 Resize the window or use each column's Back, Forward, Reload, and URL controls.
 Use TriColumns > Settings to save up to three HTTP/HTTPS URLs. Open Configured
 Pages returns to those URLs. The sample does not overwrite saved settings.
+On X.com, an additional upward scroll at the top activates X's visible new-posts
+control. This is a user-initiated gesture and does not call the X API.
 
 The following requested flows are not applicable:
 
@@ -48,7 +50,7 @@ The following requested flows are not applicable:
   posting, filtering, reporting, blocking, account, and moderation functions.
   TriColumns does not replace or bypass them. The sample is fictional, read-only,
   developer-created content and accepts no submissions.
-- Permissions: Build 2 does not request camera, microphone, location, contacts,
+- Permissions: Build 3 does not request camera, microphone, location, contacts,
   tracking, App Tracking Transparency, or automation access. Open/Save panels
   access only files or destinations explicitly selected by the user.
 
@@ -57,7 +59,8 @@ The following requested flows are not applicable:
 The app uses Apple's system WebKit and websites chosen by the user. It has no
 developer server, analytics, ads, AI, payment processor, or authentication
 service. x.com is included in the initial URL defaults, but the app does not use
-the X API, X OAuth, scraping, or automation and does not share Safari data.
+the X API, X OAuth, scraping, or automated posting or engagement and does not
+share Safari data.
 
 6. REGIONAL DIFFERENCES
 

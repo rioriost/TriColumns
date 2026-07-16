@@ -740,6 +740,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         columnStack.layer?.backgroundColor = NSColor.separatorColor.cgColor
 
         let dataStore = WKWebsiteDataStore.default()
+        let xPullToRefreshSource = Bundle.main.url(
+            forResource: "XPullToRefresh",
+            withExtension: "js"
+        ).flatMap { try? String(contentsOf: $0, encoding: .utf8) }
         let sampleDirectory = Bundle.main.resourceURL?.appendingPathComponent(
             "ReviewDemo",
             isDirectory: true
@@ -751,6 +755,15 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             let configuration = WKWebViewConfiguration()
             configuration.websiteDataStore = dataStore
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+            if let xPullToRefreshSource {
+                configuration.userContentController.addUserScript(
+                    WKUserScript(
+                        source: xPullToRefreshSource,
+                        injectionTime: .atDocumentStart,
+                        forMainFrameOnly: true
+                    )
+                )
+            }
             if let sampleDirectory {
                 configuration.setURLSchemeHandler(
                     BundledSampleSchemeHandler(resourceDirectory: sampleDirectory),

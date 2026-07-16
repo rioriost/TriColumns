@@ -107,3 +107,17 @@ Full-page reload remains a fallback rather than the primary update mechanism.
 Sites such as X.com normally retrieve timeline changes through JavaScript and
 network APIs. The timer therefore uses a long interval and skips reload when
 the page appears unsafe to interrupt. Manual reload always remains available.
+
+## X.com Pull to Refresh
+
+When X.com has already fetched timeline updates, its web interface holds them
+behind a **See new posts** or **Show N posts** control. At the top of an X.com
+page, an additional upward wheel or trackpad gesture activates that visible
+control after a movement threshold. This mirrors the user-initiated
+pull-to-refresh gesture in the iOS client without calling private X APIs or
+periodically automating page actions.
+
+The gesture is limited to X.com, does not cancel normal scrolling, and is
+suppressed while editing, uploading, viewing a modal, or playing media. Because
+it depends on X.com's rendered controls, its text matching may require updates
+if X changes its web UI.
