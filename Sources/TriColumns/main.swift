@@ -427,7 +427,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         _ webView: WKWebView,
         runJavaScriptConfirmPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping @Sendable (Bool) -> Void
+        completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         let alert = NSAlert()
         alert.messageText = webView.title ?? "Web Page"
