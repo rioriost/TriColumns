@@ -29,18 +29,13 @@
   };
 
   const isUnsafeToRefresh = () => {
-    const active = document.activeElement;
-    const editing = active && (
-      active.isContentEditable ||
-      active.matches("textarea, input:not([type='button']):not([type='submit']), select")
-    );
-    const hasFiles = Array.from(document.querySelectorAll("input[type='file']"))
-      .some(input => input.files && input.files.length > 0);
-    const hasVisibleDialog = Array.from(document.querySelectorAll("[role='dialog']"))
-      .some(isVisible);
-    const playingMedia = Array.from(document.querySelectorAll("audio, video"))
-      .some(media => !media.paused && !media.ended);
-    return editing || hasFiles || hasVisibleDialog || playingMedia;
+    try {
+      // Both scripts must run in WKContentWorld "TriColumnsSafety".
+      // Missing, malformed, or failing safety checks must never enable refresh.
+      return globalThis.__triColumnsRefreshSafety?.isUnsafe() !== false;
+    } catch {
+      return true;
+    }
   };
 
   const isAtTop = event => {
@@ -116,7 +111,11 @@
     }
 
     coolingDown = true;
-    requestAnimationFrame(() => button.click());
+    requestAnimationFrame(() => {
+      if (button.isConnected && !isUnsafeToRefresh()) {
+        button.click();
+      }
+    });
     setTimeout(() => coolingDown = false, triggerCooldown);
   }, { capture: true, passive: true });
 })();

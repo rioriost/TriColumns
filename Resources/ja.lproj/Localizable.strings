@@ -21,3 +21,10 @@
 "download.failed" = "ダウンロードに失敗しました";
 "sample.failed.title" = "サンプルを開けません";
 "sample.failed.message" = "アプリに含まれるサンプルページを開けませんでした。";
+"button.retry" = "再試行";
+"button.apply" = "変更を適用";
+"navigation.failed" = "ページを読み込めません";
+"navigation.insecure" = "このHTTP接続は暗号化されていません。";
+"settings.discard.title" = "変更したカラムのページを離れますか？";
+"settings.discard.message" = "変更対象のカラムに未保存の内容や実行中の操作がある可能性があります。URLを適用すると、そのページを離れます。変更していないカラムはそのまま残ります。";
+"refresh.unavailable" = "自動更新を利用できません";

@@ -1,12 +1,12 @@
 import AppKit
 import WebKit
 
-private struct ColumnSpec {
+struct ColumnSpec {
     let title: String
     let address: String
 }
 
-private enum L10n {
+enum L10n {
     static func string(_ key: String) -> String {
         NSLocalizedString(key, comment: "")
     }
@@ -39,20 +39,20 @@ private enum ColumnPreferences {
     }
 }
 
-private let autoReloadInterval: TimeInterval? = {
-    let defaultInterval: TimeInterval = 30 * 60
-    guard let rawValue = ProcessInfo.processInfo.environment["TRICOLUMNS_RELOAD_SECONDS"] else {
-        return defaultInterval
-    }
+private enum BrowserDefaults {
+    static let autoReloadInterval: TimeInterval? = {
+        let defaultInterval: TimeInterval = 30 * 60
+        guard let rawValue = ProcessInfo.processInfo.environment["TRICOLUMNS_RELOAD_SECONDS"] else {
+            return defaultInterval
+        }
+        guard let value = TimeInterval(rawValue), value > 0 else {
+            return nil
+        }
+        return max(value, 30)
+    }()
 
-    guard let value = TimeInterval(rawValue), value > 0 else {
-        return nil
-    }
-
-    return max(value, 30)
-}()
-
-private let sampleURLScheme = "tricolumns-sample"
+    static let sampleURLScheme = "tricolumns-sample"
+}
 
 private final class BundledSampleSchemeHandler: NSObject, WKURLSchemeHandler {
     private let resourceDirectory: URL
@@ -124,6 +124,7 @@ private final class PopupWindowController: NSWindowController, NSWindowDelegate 
             defer: false
         )
         window.title = "Web Page"
+        window.isReleasedWhenClosed = false
         window.contentView = webView
         window.center()
         super.init(window: window)
@@ -140,43 +141,38 @@ private final class PopupWindowController: NSWindowController, NSWindowDelegate 
 }
 
 @MainActor
-private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, NSTextFieldDelegate {
+final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTextFieldDelegate {
     private let titleLabel = NSTextField(labelWithString: "")
     private let addressField = NSTextField(string: "")
     private let backButton = NSButton(title: "‹", target: nil, action: nil)
     private let forwardButton = NSButton(title: "›", target: nil, action: nil)
     private let reloadButton = NSButton(title: "↻", target: nil, action: nil)
-    private let webView: WKWebView
+    let webView: WKWebView
+    private let failureLabel = NSTextField(wrappingLabelWithString: "")
+    private let failureBar = NSStackView()
+    private(set) var failedURL: URL?
     private var autoReloadTimer: Timer?
     private var popupControllers: [PopupWindowController] = []
     private var configuredAddress: String
-    private var displayAddressOverride: String?
-
-    private static let reloadSafetyScript = """
-        (() => {
-          const visible = element => {
-            if (!element) return false;
-            const style = window.getComputedStyle(element);
-            return style.display !== 'none' && style.visibility !== 'hidden';
-          };
-          const text = element => (element.innerText || element.value || '').trim();
-          const hasDraft = Array.from(document.querySelectorAll(
-            '[data-testid^="tweetTextarea_"], textarea'
-          )).some(element => visible(element) && text(element).length > 0);
-          const hasFiles = Array.from(document.querySelectorAll('input[type="file"]'))
-            .some(element => element.files && element.files.length > 0);
-          const active = document.activeElement;
-          const isEditing = active && visible(active) && (
-            active.isContentEditable ||
-            active.matches('textarea, input:not([type="button"]):not([type="submit"]), select')
-          );
-          const hasModal = Array.from(document.querySelectorAll('[role="dialog"]'))
-            .some(visible);
-          const isPlaying = Array.from(document.querySelectorAll('audio, video'))
-            .some(element => !element.paused && !element.ended);
-          return hasDraft || hasFiles || isEditing || hasModal || isPlaying;
-        })();
-        """
+    private struct NavigationState {
+        var navigation: WKNavigation?
+        var generation = UUID()
+    }
+    private var navigationStates: [ObjectIdentifier: NavigationState] = [:]
+    private var nativePanelCount = 0
+    static let safetyWorld = WKContentWorld.world(name: "TriColumnsSafety")
+    private lazy var downloads = DownloadCoordinator(
+        presentPanel: { [weak self] panel, origin, completion in
+            guard let self else { completion(.cancel); return }
+            self.present(panel, for: origin, completion: completion)
+        },
+        reportError: { [weak self] error, origin in
+            guard let self else { return }
+            let alert = NSAlert(error: error)
+            alert.messageText = L10n.string("download.failed")
+            self.present(alert, for: origin ?? self.webView) { _ in }
+        }
+    )
 
     init(spec: ColumnSpec, configuration: WKWebViewConfiguration) {
         self.webView = WKWebView(frame: .zero, configuration: configuration)
@@ -216,14 +212,32 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         toolbar.translatesAutoresizingMaskIntoConstraints = false
 
+        let retryButton = NSButton(title: L10n.string("button.retry"), target: self, action: #selector(retryNavigation))
+        failureLabel.font = .systemFont(ofSize: 11)
+        failureLabel.maximumNumberOfLines = 3
+        failureLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        failureBar.orientation = .horizontal
+        failureBar.spacing = 6
+        failureBar.edgeInsets = NSEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
+        failureBar.addArrangedSubview(failureLabel)
+        failureBar.addArrangedSubview(retryButton)
+        failureBar.isHidden = true
+        let header = NSStackView(views: [toolbar, failureBar])
+        header.orientation = .vertical
+        header.alignment = .leading
+        header.spacing = 0
+        header.translatesAutoresizingMaskIntoConstraints = false
+
         webView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(toolbar)
+        addSubview(header)
         addSubview(webView)
 
         NSLayoutConstraint.activate([
-            toolbar.topAnchor.constraint(equalTo: topAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: trailingAnchor),
+            header.topAnchor.constraint(equalTo: topAnchor),
+            header.leadingAnchor.constraint(equalTo: leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: trailingAnchor),
+            toolbar.widthAnchor.constraint(equalTo: header.widthAnchor),
+            failureBar.widthAnchor.constraint(equalTo: header.widthAnchor),
             toolbar.heightAnchor.constraint(equalToConstant: 38),
 
             titleLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 72),
@@ -232,7 +246,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
             forwardButton.widthAnchor.constraint(equalToConstant: 30),
             reloadButton.widthAnchor.constraint(equalToConstant: 30),
 
-            webView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            webView.topAnchor.constraint(equalTo: header.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: bottomAnchor)
@@ -256,33 +270,37 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard navigationStates[ObjectIdentifier(webView)]?.navigation === navigation else { return }
         if webView === self.webView {
             if let sampleAddress = Self.sampleDisplayAddress(for: webView.url) {
-                displayAddressOverride = sampleAddress
                 addressField.stringValue = sampleAddress
             } else if configuredAddress.isEmpty && webView.url?.absoluteString == "about:blank" {
-                displayAddressOverride = nil
                 addressField.stringValue = ""
             } else {
-                displayAddressOverride = nil
                 addressField.stringValue = webView.url?.absoluteString ?? addressField.stringValue
             }
+            addressField.toolTip = webView.url?.scheme == "http" ? L10n.string("navigation.insecure") : nil
+            addressField.textColor = webView.url?.scheme == "http" ? .systemOrange : .labelColor
             updateNavigationButtons()
         } else if let title = webView.title, !title.isEmpty {
             webView.window?.title = title
         }
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        navigationStates[ObjectIdentifier(webView)] = NavigationState(navigation: navigation)
         if webView === self.webView {
-            updateNavigationButtons()
+            failureBar.isHidden = true
+            failedURL = nil
         }
     }
 
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        showNavigationFailure(error, navigation: navigation, in: webView)
+    }
+
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        if webView === self.webView {
-            updateNavigationButtons()
-        }
+        showNavigationFailure(error, navigation: navigation, in: webView)
     }
 
     func webView(
@@ -300,10 +318,14 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
             return
         }
 
-        let webSchemes = ["http", "https", "file", "about", "blob", "data", sampleURLScheme]
+        let webSchemes = ["http", "https", "file", "about", "blob", "data", BrowserDefaults.sampleURLScheme]
         guard let scheme = url.scheme?.lowercased(), webSchemes.contains(scheme) else {
             if navigationAction.navigationType == .linkActivated {
-                NSWorkspace.shared.open(url)
+                if !NSWorkspace.shared.open(url) {
+                    let alert = NSAlert(error: URLError(.unsupportedURL))
+                    alert.informativeText = url.absoluteString
+                    present(alert, for: webView) { _ in }
+                }
             }
             decisionHandler(.cancel)
             return
@@ -328,7 +350,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         navigationAction: WKNavigationAction,
         didBecome download: WKDownload
     ) {
-        download.delegate = self
+        downloads.start(download, from: webView)
     }
 
     func webView(
@@ -336,43 +358,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         navigationResponse: WKNavigationResponse,
         didBecome download: WKDownload
     ) {
-        download.delegate = self
-    }
-
-    func download(
-        _ download: WKDownload,
-        decideDestinationUsing response: URLResponse,
-        suggestedFilename: String,
-        completionHandler: @escaping @MainActor @Sendable (URL?) -> Void
-    ) {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = suggestedFilename
-        panel.canCreateDirectories = true
-
-        present(panel, for: webView) { [weak self] result in
-            guard result == .OK, let destination = panel.url else {
-                completionHandler(nil)
-                return
-            }
-
-            do {
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
-                }
-                completionHandler(destination)
-            } catch {
-                self?.showDownloadError(error)
-                completionHandler(nil)
-            }
-        }
-    }
-
-    func download(
-        _ download: WKDownload,
-        didFailWithError error: Error,
-        resumeData: Data?
-    ) {
-        showDownloadError(error)
+        downloads.start(download, from: webView)
     }
 
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
@@ -385,12 +371,23 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         configure(popupWebView)
         let controller = PopupWindowController(webView: popupWebView)
         controller.onClose = { [weak self] closedController in
+            if let closedView = closedController.window?.contentView as? WKWebView {
+                self?.downloads.cancelDownloads(from: closedView)
+                closedView.stopLoading()
+                self?.navigationStates.removeValue(forKey: ObjectIdentifier(closedView))
+                closedView.navigationDelegate = nil
+                closedView.uiDelegate = nil
+            }
             self?.popupControllers.removeAll { $0 === closedController }
         }
         popupControllers.append(controller)
         controller.showWindow(nil)
         controller.window?.makeKeyAndOrderFront(nil)
         return popupWebView
+    }
+
+    func webViewDidClose(_ webView: WKWebView) {
+        popupControllers.first { $0.window?.contentView === webView }?.close()
     }
 
     func webView(
@@ -419,7 +416,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         let alert = NSAlert()
         alert.messageText = webView.title ?? "Web Page"
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L10n.string("button.ok"))
         present(alert, for: webView) { _ in completionHandler() }
     }
 
@@ -432,8 +429,8 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         let alert = NSAlert()
         alert.messageText = webView.title ?? "Web Page"
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L10n.string("button.ok"))
+        alert.addButton(withTitle: L10n.string("button.cancel"))
         present(alert, for: webView) { response in
             completionHandler(response == .alertFirstButtonReturn)
         }
@@ -453,8 +450,8 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         alert.messageText = webView.title ?? "Web Page"
         alert.informativeText = prompt
         alert.accessoryView = field
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L10n.string("button.ok"))
+        alert.addButton(withTitle: L10n.string("button.cancel"))
         present(alert, for: webView) { response in
             completionHandler(response == .alertFirstButtonReturn ? field.stringValue : nil)
         }
@@ -477,15 +474,32 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
     }
 
     @objc private func autoReload() {
-        guard !webView.isLoading else {
+        guard !configuredAddress.isEmpty else { return }
+        checkRefreshSafety { [weak self] safe in
+            if safe { self?.webView.reload() }
+        }
+    }
+
+    func checkRefreshSafety(completion: @escaping (Bool) -> Void) {
+        guard !webView.isLoading, nativePanelCount == 0, window?.attachedSheet == nil else {
+            completion(false)
             return
         }
-
-        webView.evaluateJavaScript(Self.reloadSafetyScript) { [weak self] result, error in
-            guard let self, error == nil, result as? Bool == false, !self.webView.isLoading else {
+        let generation = navigationStates[ObjectIdentifier(webView)]?.generation
+        webView.evaluateJavaScript(
+            "globalThis.__triColumnsRefreshSafety?.isUnsafe() ?? true",
+            in: nil,
+            in: Self.safetyWorld
+        ) { [weak self] result in
+            guard let self,
+                  self.navigationStates[ObjectIdentifier(self.webView)]?.generation == generation,
+                  !self.webView.isLoading, self.nativePanelCount == 0,
+                  self.window?.attachedSheet == nil,
+                  case .success(let value) = result, value as? Bool == false else {
+                completion(false)
                 return
             }
-            self.webView.reload()
+            completion(true)
         }
     }
 
@@ -495,34 +509,73 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
             return
         }
 
-        let normalized = rawValue.contains("://") ? rawValue : "https://\(rawValue)"
-        guard let url = URL(string: normalized) else {
-            NSSound.beep()
-            return
+        do {
+            let url = try BrowserAddress.parse(rawValue, inferHTTPS: true)
+            configuredAddress = url.absoluteString
+            load(url)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = L10n.string("settings.invalid_url.title")
+            present(alert, for: webView) { _ in }
         }
-
-        configuredAddress = url.absoluteString
-        displayAddressOverride = nil
-        webView.load(URLRequest(url: url))
     }
 
     func loadConfiguredAddress(_ address: String) {
         configuredAddress = address
-        displayAddressOverride = nil
         addressField.stringValue = address
 
-        guard !address.isEmpty, let url = URL(string: address) else {
-            webView.load(URLRequest(url: URL(string: "about:blank")!))
+        guard !address.isEmpty else {
+            load(URL(string: "about:blank")!)
             return
         }
-        webView.load(URLRequest(url: url))
+        do {
+            load(try BrowserAddress.parse(address))
+        } catch {
+            failureLabel.stringValue = "\(L10n.string("settings.invalid_url.title")): \(address)"
+            failureBar.isHidden = false
+        }
     }
 
     func loadSamplePage(_ url: URL, displayAddress: String) {
         configuredAddress = displayAddress
-        displayAddressOverride = displayAddress
         addressField.stringValue = displayAddress
-        webView.load(URLRequest(url: url))
+        load(url)
+    }
+
+    private func load(_ url: URL) {
+        let navigation = webView.load(URLRequest(url: url))
+        navigationStates[ObjectIdentifier(webView)] = NavigationState(navigation: navigation)
+    }
+
+    @objc private func retryNavigation() {
+        if let failedURL { load(failedURL) }
+    }
+
+    private func showNavigationFailure(_ error: Error, navigation: WKNavigation?, in origin: WKWebView) {
+        guard NavigationFailure.shouldReport(error),
+              let state = navigationStates[ObjectIdentifier(origin)],
+              state.navigation === navigation else { return }
+        let url = NavigationFailure.failingURL(error) ?? origin.url
+        if origin === webView {
+            failedURL = url
+            failureLabel.stringValue = [
+                L10n.string("navigation.failed"), url?.absoluteString, error.localizedDescription
+            ].compactMap { $0 }.joined(separator: "\n")
+            failureBar.isHidden = false
+            addressField.stringValue = origin.url?.absoluteString ?? ""
+            updateNavigationButtons()
+        } else {
+            let alert = NSAlert(error: error)
+            alert.messageText = L10n.string("navigation.failed")
+            alert.informativeText = [url?.absoluteString, error.localizedDescription].compactMap { $0 }.joined(separator: "\n")
+            alert.addButton(withTitle: L10n.string("button.retry"))
+            alert.addButton(withTitle: L10n.string("button.cancel"))
+            present(alert, for: origin) { [weak self, weak origin] response in
+                guard let self, let origin, response == .alertFirstButtonReturn, let url,
+                      self.navigationStates[ObjectIdentifier(origin)]?.generation == state.generation else { return }
+                origin.load(URLRequest(url: url))
+            }
+        }
     }
 
     private func updateNavigationButtons() {
@@ -532,7 +585,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
 
     private static func sampleDisplayAddress(for url: URL?) -> String? {
         guard let url,
-              url.scheme == sampleURLScheme,
+              url.scheme == BrowserDefaults.sampleURLScheme,
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let column = components.queryItems?.first(where: { $0.name == "column" })?.value else {
             return nil
@@ -545,6 +598,7 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
+        navigationStates[ObjectIdentifier(webView)] = NavigationState()
     }
 
     private func isXURL(_ url: URL) -> Bool {
@@ -560,11 +614,16 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         for webView: WKWebView,
         completion: @escaping (NSApplication.ModalResponse) -> Void
     ) {
+        nativePanelCount += 1
+        let finish: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            self?.nativePanelCount -= 1
+            completion(response)
+        }
         guard let window = webView.window else {
-            completion(panel.runModal())
+            finish(panel.runModal())
             return
         }
-        panel.beginSheetModal(for: window, completionHandler: completion)
+        panel.beginSheetModal(for: window, completionHandler: finish)
     }
 
     private func present(
@@ -572,40 +631,46 @@ private final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegat
         for webView: WKWebView,
         completion: @escaping (NSApplication.ModalResponse) -> Void
     ) {
+        nativePanelCount += 1
+        let finish: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            self?.nativePanelCount -= 1
+            completion(response)
+        }
         guard let window = webView.window else {
-            completion(alert.runModal())
+            finish(alert.runModal())
             return
         }
-        alert.beginSheetModal(for: window, completionHandler: completion)
-    }
-
-    private func showDownloadError(_ error: Error) {
-        let alert = NSAlert(error: error)
-        alert.messageText = L10n.string("download.failed")
-        present(alert, for: webView) { _ in }
+        alert.beginSheetModal(for: window, completionHandler: finish)
     }
 
     private func startAutoReloadTimer() {
-        guard let interval = autoReloadInterval else {
+        guard let interval = BrowserDefaults.autoReloadInterval else {
             return
         }
 
-        autoReloadTimer = Timer.scheduledTimer(
-            timeInterval: interval,
-            target: self,
-            selector: #selector(autoReload),
-            userInfo: nil,
-            repeats: true
-        )
+        autoReloadTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.autoReload() }
+        }
+    }
+
+    func shutDown() {
+        autoReloadTimer?.invalidate()
+        autoReloadTimer = nil
+        webView.stopLoading()
+        downloads.cancelDownloads(from: webView)
+        for controller in popupControllers { controller.close() }
+        navigationStates.removeAll()
     }
 }
 
 @MainActor
 private final class SettingsWindowController: NSWindowController {
     private let addressFields = (0..<3).map { _ in NSTextField(string: "") }
-    private let onSave: ([String]) -> Void
+    private let onSave: ([String]) async -> Bool
+    private var isSaving = false
+    private var actionButtons: [NSButton] = []
 
-    init(addresses: [String], onSave: @escaping ([String]) -> Void) {
+    init(addresses: [String], onSave: @escaping ([String]) async -> Bool) {
         self.onSave = onSave
 
         let window = NSWindow(
@@ -647,6 +712,7 @@ private final class SettingsWindowController: NSWindowController {
         )
         saveButton.keyEquivalent = "\r"
         saveButton.bezelStyle = .rounded
+        actionButtons = [saveButton, cancelButton]
 
         let buttons = NSStackView(views: [cancelButton, saveButton])
         buttons.orientation = .horizontal
@@ -677,6 +743,7 @@ private final class SettingsWindowController: NSWindowController {
     }
 
     func update(addresses: [String]) {
+        guard !isSaving else { return }
         for (field, address) in zip(addressFields, addresses) {
             field.stringValue = address
         }
@@ -687,22 +754,34 @@ private final class SettingsWindowController: NSWindowController {
     }
 
     @objc private func save() {
+        guard !isSaving else { return }
         let addresses = addressFields.map {
             $0.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
         for (index, address) in addresses.enumerated() where !address.isEmpty {
-            guard let components = URLComponents(string: address),
-                  let scheme = components.scheme?.lowercased(),
-                  ["http", "https"].contains(scheme),
-                  components.host != nil else {
+            do {
+                _ = try BrowserAddress.parse(address)
+            } catch {
                 showInvalidURLAlert(column: index + 1)
                 return
             }
         }
 
-        onSave(addresses)
-        window?.close()
+        isSaving = true
+        setControlsEnabled(false)
+        Task { @MainActor in
+            let saved = await onSave(addresses)
+            isSaving = false
+            setControlsEnabled(true)
+            if saved { window?.close() }
+        }
+    }
+
+    private func setControlsEnabled(_ enabled: Bool) {
+        addressFields.forEach { $0.isEnabled = enabled }
+        actionButtons.forEach { $0.isEnabled = enabled }
+        window?.standardWindowButton(.closeButton)?.isEnabled = enabled
     }
 
     private func showInvalidURLAlert(column: Int) {
@@ -720,7 +799,7 @@ private final class SettingsWindowController: NSWindowController {
 }
 
 @MainActor
-private final class AppDelegate: NSObject, NSApplicationDelegate {
+private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
     private var columns: [BrowserColumnView] = []
     private var settingsWindowController: SettingsWindowController?
@@ -740,11 +819,21 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         columnStack.layer?.backgroundColor = NSColor.separatorColor.cgColor
 
         let dataStore = WKWebsiteDataStore.default()
-        let xPullToRefreshSource = Bundle.main.url(
-            forResource: "XPullToRefresh",
-            withExtension: "js"
-        ).flatMap { try? String(contentsOf: $0, encoding: .utf8) }
-        let sampleDirectory = Bundle.main.resourceURL?.appendingPathComponent(
+        var userScripts: [WKUserScript] = []
+        var resourceError: Error?
+        do {
+            let safety = try AppResources.script(named: "RefreshSafety")
+            let pull = try AppResources.script(named: "XPullToRefresh")
+            userScripts = [
+                WKUserScript(source: safety, injectionTime: .atDocumentStart,
+                             forMainFrameOnly: false, in: BrowserColumnView.safetyWorld),
+                WKUserScript(source: pull, injectionTime: .atDocumentStart,
+                             forMainFrameOnly: true, in: BrowserColumnView.safetyWorld)
+            ]
+        } catch {
+            resourceError = error
+        }
+        let sampleDirectory = AppResources.directory?.appendingPathComponent(
             "ReviewDemo",
             isDirectory: true
         )
@@ -755,19 +844,11 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             let configuration = WKWebViewConfiguration()
             configuration.websiteDataStore = dataStore
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-            if let xPullToRefreshSource {
-                configuration.userContentController.addUserScript(
-                    WKUserScript(
-                        source: xPullToRefreshSource,
-                        injectionTime: .atDocumentStart,
-                        forMainFrameOnly: true
-                    )
-                )
-            }
+            userScripts.forEach(configuration.userContentController.addUserScript)
             if let sampleDirectory {
                 configuration.setURLSchemeHandler(
                     BundledSampleSchemeHandler(resourceDirectory: sampleDirectory),
-                    forURLScheme: sampleURLScheme
+                    forURLScheme: BrowserDefaults.sampleURLScheme
                 )
             }
 
@@ -792,10 +873,18 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "TriColumns"
+        window.isReleasedWhenClosed = false
+        window.delegate = self
         window.contentView = columnStack
         window.center()
         window.makeKeyAndOrderFront(nil)
         self.window = window
+
+        if let resourceError {
+            let alert = NSAlert(error: resourceError)
+            alert.messageText = L10n.string("refresh.unavailable")
+            alert.beginSheetModal(for: window)
+        }
 
         if CommandLine.arguments.contains("--sample-workspace") {
             showSampleWorkspace(nil)
@@ -806,14 +895,17 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    func windowWillClose(_ notification: Notification) {
+        columns.forEach { $0.shutDown() }
+        settingsWindowController?.close()
+    }
+
     @objc private func showSettings(_ sender: Any?) {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(addresses: ColumnPreferences.addresses) {
                 [weak self] addresses in
-                ColumnPreferences.save(addresses)
-                for (column, address) in zip(self?.columns ?? [], addresses) {
-                    column.loadConfiguredAddress(address)
-                }
+                guard let self else { return false }
+                return await self.applySettings(addresses)
             }
         } else {
             settingsWindowController?.update(addresses: ColumnPreferences.addresses)
@@ -824,8 +916,34 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 
+    private func applySettings(_ addresses: [String]) async -> Bool {
+        let changed = SettingsChanges.indices(from: ColumnPreferences.addresses, to: addresses)
+        var needsConfirmation = false
+        for index in changed {
+            let safe = await withCheckedContinuation { continuation in
+                columns[index].checkRefreshSafety { continuation.resume(returning: $0) }
+            }
+            if !safe { needsConfirmation = true }
+        }
+        if needsConfirmation {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = L10n.string("settings.discard.title")
+            alert.informativeText = L10n.string("settings.discard.message")
+            alert.addButton(withTitle: L10n.string("button.cancel"))
+            alert.addButton(withTitle: L10n.string("button.apply"))
+            guard let settingsWindow = settingsWindowController?.window,
+                  await alert.beginSheetModal(for: settingsWindow) == .alertSecondButtonReturn else {
+                return false
+            }
+        }
+        ColumnPreferences.save(addresses)
+        for index in changed { columns[index].loadConfiguredAddress(addresses[index]) }
+        return true
+    }
+
     @objc private func showSampleWorkspace(_ sender: Any?) {
-        guard let demoDirectory = Bundle.main.resourceURL?.appendingPathComponent(
+        guard let demoDirectory = AppResources.directory?.appendingPathComponent(
             "ReviewDemo",
             isDirectory: true
         ) else {
@@ -842,7 +960,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         let language = Locale.preferredLanguages.first?.hasPrefix("ja") == true ? "ja" : "en"
         for (index, column) in columns.enumerated() {
             var components = URLComponents()
-            components.scheme = sampleURLScheme
+            components.scheme = BrowserDefaults.sampleURLScheme
             components.host = "workspace"
             components.path = "/demo.html"
             components.queryItems = [

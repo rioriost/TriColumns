@@ -20,6 +20,18 @@ The app requests only these sandbox capabilities:
 There is no incoming-network, camera, microphone, contacts, calendar, location,
 automation, or full-disk entitlement.
 
+## Web Content Transport Policy
+
+Starting with 1.1.1, `NSAllowsArbitraryLoadsInWebContent` permits user-directed
+HTTP browsing inside WebKit. This is a browser with user-configurable destinations;
+it cannot enumerate every destination as a domain exception. HTTPS remains the
+default for addresses entered without a scheme. HTTP addresses are shown in orange
+with an unencrypted-connection tooltip.
+
+Provide this browser-use justification during App Store review. The exception
+does not disable ATS for the application's own URLSession connections, does not
+bypass certificate validation, and adds no Sandbox entitlement.
+
 ## Privacy
 
 `Resources/PrivacyInfo.xcprivacy` declares `UserDefaults` access with approved
@@ -44,6 +56,9 @@ policy that explains this distinction.
 The locally installed Release build is signed with Apple Development for
 testing. It is not the App Store upload artifact. Developer ID Application is
 also not used for Mac App Store submission.
+
+A GitHub source release is separate from an App Store Connect submission.
+Publishing a GitHub tag does not upload or approve an App Store build.
 
 ## Review Notes
 

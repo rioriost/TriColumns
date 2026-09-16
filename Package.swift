@@ -18,6 +18,11 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("WebKit")
             ]
+        ),
+        .testTarget(
+            name: "TriColumnsTests",
+            dependencies: ["TriColumns"],
+            path: "Tests/TriColumnsTests"
         )
     ]
 )

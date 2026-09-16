@@ -121,3 +121,31 @@ The gesture is limited to X.com, does not cancel normal scrolling, and is
 suppressed while editing, uploading, viewing a modal, or playing media. Because
 it depends on X.com's rendered controls, its text matching may require updates
 if X changes its web UI.
+
+## 1.1.1 Reliability Changes
+
+The September 2026 review is implemented without changing the three-column or
+shared-cookie architecture:
+
+- Downloads use operation-specific temporary storage and only finalize a
+  successful download to the selected destination. The existing destination
+  is not removed at download start; save/error panels use the originating view.
+- A shared script in an isolated WebKit content world tracks edits for the
+  lifetime of each document. Embedded frames and unknown state suppress
+  automatic refresh rather than assuming that they are safe. Native panels,
+  HTML dialogs, media, and navigation changes also suppress it. Manual reload
+  remains an explicit destructive action.
+- Settings compare old and new configured URLs, confirm potentially unsafe
+  changes before saving, and only navigate the affected columns.
+- Settings and address entry use common HTTP/HTTPS validation. Empty configured
+  columns remain supported, but empty-host URLs are rejected.
+- HTTP support is scoped to WebKit content through ATS; other application
+  networking retains the default ATS policy. HTTP addresses are distinguished
+  from encrypted connections.
+- Navigation failures are visible and retryable; expected cancellations and
+  stale navigation failures do not replace the current page's status.
+- Popup windows honor `window.close()` and release their delegates and downloads
+  when closed. Closing the main window stops timers and closes auxiliary windows.
+
+Regression tests run with `swift test`, including local, nonpersistent WebKit
+fixtures. No authenticated X.com account is required by the automated tests.

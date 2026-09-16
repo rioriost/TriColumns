@@ -21,3 +21,10 @@
 "download.failed" = "Download Failed";
 "sample.failed.title" = "Sample Workspace Unavailable";
 "sample.failed.message" = "The bundled sample pages could not be opened.";
+"button.retry" = "Retry";
+"button.apply" = "Apply Changes";
+"navigation.failed" = "Page Could Not Be Loaded";
+"navigation.insecure" = "This HTTP connection is not encrypted.";
+"settings.discard.title" = "Leave the changed columns?";
+"settings.discard.message" = "One or more changed columns may contain unsaved work or an ongoing operation. Applying these URLs will leave those pages. Unchanged columns will stay as they are.";
+"refresh.unavailable" = "Automatic refresh is unavailable";

@@ -19,16 +19,19 @@ For a local Release build installed at `/Applications/TriColumns.app`:
 scripts/install_app.sh
 ```
 
-The Swift Package remains available for compiler checks:
+The Swift Package supports compiler checks and regression tests:
 
 ```sh
 swift build
+swift test
 ```
 
 ## Columns
 
 Column URLs are configured from **TriColumns > Settings** and stored in the
-app's `UserDefaults` container. The defaults are:
+app's `UserDefaults` container. Saving settings only navigates columns whose
+configured URLs changed; potentially unsafe changes require confirmation.
+The defaults are:
 
 - Column 1: empty
 - Column 2: `https://x.com/notifications`
@@ -54,12 +57,22 @@ Set the value to `0` to disable automatic reload.
 - JavaScript alert, confirmation, and text-input dialogs.
 - Popup windows without replacing an existing column.
 - Native save panels for downloads and macOS handling for external URL schemes.
+- Downloads keep an existing destination intact until the new file has finished,
+  and show save panels in the originating window.
+- HTTP and HTTPS browsing, with an orange address and a warning tooltip for
+  unencrypted HTTP connections. Failed navigation has an explicit retry action.
 - Automatic reload suppression while editing, uploading, viewing a modal, or
   playing audio or video.
 - On X.com, an additional upward scroll at the top activates X's visible
   **See new posts** control, similar to pull-to-refresh on iOS. It does nothing
   when no buffered posts are available.
 - Standard WebKit drag-and-drop and clipboard behavior.
+
+After an edit, automatic refresh stays paused for the lifetime of that document,
+even after focus leaves the editor. Pages with embedded frames or uninspectable
+editing state are conservatively excluded from automatic refresh. Manual reload
+is always available and may discard unsaved work. X.com's pull gesture uses the
+same safety policy but only activates the site's existing new-posts control.
 
 This app uses WebKit but does not embed Safari or share Safari's cookies. The
 first launch may require signing in to websites again.
@@ -80,6 +93,8 @@ Privacy policies: [日本語](docs/PRIVACY_POLICY.md) / [English](docs/PRIVACY_P
 ## Design
 
 See [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+The [September 2026 review](docs/DESIGN_CODE_REVIEW_2026-09-16.md) records the
+issues addressed in [1.1.1](docs/RELEASE_NOTES_1.1.1.md).
 
 ## License
 
