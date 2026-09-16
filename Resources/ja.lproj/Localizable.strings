@@ -1,4 +1,6 @@
 "menu.about" = "TriColumnsについて";
+"menu.privacy" = "プライバシーポリシー…";
+"menu.support" = "サポート…";
 "menu.settings" = "設定…";
 "menu.open_sample" = "サンプルワークスペースを開く";
 "menu.restore_configured" = "設定済みページを開く";

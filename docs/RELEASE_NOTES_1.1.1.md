@@ -5,6 +5,7 @@ design and code review. Minimum supported macOS remains 14.
 
 ## Fixes
 
+- App Store build 7 adds localized Privacy Policy and Support menu links.
 - Preserve existing files when a replacement download fails or is cancelled.
 - Associate each download and its save/error UI with the window that started it.
 - Keep automatic refresh paused after editing, including after focus changes.

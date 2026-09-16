@@ -1,4 +1,6 @@
 "menu.about" = "About TriColumns";
+"menu.privacy" = "Privacy Policy…";
+"menu.support" = "Support…";
 "menu.settings" = "Settings…";
 "menu.open_sample" = "Open Sample Workspace";
 "menu.restore_configured" = "Open Configured Pages";

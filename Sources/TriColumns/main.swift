@@ -1001,6 +1001,18 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
     }
 
+    @objc private func openPrivacyPolicy(_ sender: Any?) {
+        let filename = Locale.preferredLanguages.first?.hasPrefix("ja") == true
+            ? "PRIVACY_POLICY.md" : "PRIVACY_POLICY.en.md"
+        guard let url = URL(string: "https://github.com/rioriost/TriColumns/blob/main/docs/\(filename)") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc private func openSupport(_ sender: Any?) {
+        guard let url = URL(string: "https://github.com/rioriost/TriColumns/issues") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     @MainActor
     private func configureMainMenu() {
         let mainMenu = NSMenu()
@@ -1044,6 +1056,23 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         )
         restoreItem.target = self
         appMenu.addItem(restoreItem)
+        appMenu.addItem(.separator())
+
+        let privacyItem = NSMenuItem(
+            title: L10n.string("menu.privacy"),
+            action: #selector(openPrivacyPolicy(_:)),
+            keyEquivalent: ""
+        )
+        privacyItem.target = self
+        appMenu.addItem(privacyItem)
+
+        let supportItem = NSMenuItem(
+            title: L10n.string("menu.support"),
+            action: #selector(openSupport(_:)),
+            keyEquivalent: ""
+        )
+        supportItem.target = self
+        appMenu.addItem(supportItem)
         appMenu.addItem(.separator())
 
         let quitItem = NSMenuItem(
