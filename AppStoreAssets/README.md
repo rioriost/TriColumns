@@ -16,7 +16,9 @@ The current set shows version 1.1.2 (8). Native screenshots of the archived
 binary were taken in isolated, locale-specific app copies with fictional sample
 content. The main window capture is proportionally fitted to a 1440 x 900 canvas;
 the Settings capture is centered on the same canvas. These are composed assets,
-not full-resolution 1440 x 900 native captures. No controls or app content were
+not full-resolution 1440 x 900 native captures. All four current files were
+verified as actual 8-bit RGB PNG at 1440 x 900; the initial JPEG/PNG extension
+mismatch was corrected before successful App Store processing. No controls or app content were
 retouched. The isolated copies used different bundle IDs and ad-hoc signatures
 to avoid changing the installed app's preferences or website sessions.
 

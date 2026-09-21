@@ -24,9 +24,16 @@ by App Store Connect is September 21, 2026, 12:22.
 
 Source: [Upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/).
 
-### Resolved — Screenshot replacement (2.3 metadata)
+### Resolved — Screenshot processing verification (2.3 metadata)
 
-Japanese and English (US) each show **2 / 10** current screenshots, in this order:
+Correction: the earlier 2 / 10 count proved registration only. Add for Review
+reported screenshots still uploading, and visual inspection showed failed image
+tiles. The files had JPEG data with PNG extensions. All four files were converted
+to actual RGB PNG (1440 x 900), replaced, and visually verified in both locales.
+Add for Review then succeeded; the draft lists 1.1.2 (8) as Ready for Review.
+The final Submit for Review control is available and has not been clicked.
+
+Intended Japanese and English (US) order:
 `01-three-column-workspace.png`, `03-column-settings.png`. These are the current
 assets in `AppStoreAssets/Screenshots`. English uses its own localized images,
 not inherited Japanese images. Published 1.1.1 was not changed.
@@ -45,12 +52,17 @@ App Store Connect identifies the app as Social Networking; the app bundle uses
 Productivity. The browser can serve both workflows, but the category should be
 reviewed for the intended primary use. Existing categorization was retained.
 
+Source: [Guideline 2.3.5](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata).
+
 ### MANUAL — Review contact
 
 The draft shows the existing contact name, but phone and email values were not
 exposed in the accessibility snapshot. This does not establish whether stored
 values are absent. Confirm usable contact details before submission; none were
-invented or replaced.
+invented or replaced. Add for Review accepted the existing contact fields, but
+this does not independently verify that the contact is reachable.
+
+Source: [Guideline 2.1](https://developer.apple.com/app-store/review/guidelines/#app-completeness).
 
 ### MANUAL — Runtime coverage
 
@@ -59,6 +71,10 @@ inspected. macOS 14, light appearance, the actual minimum window size, VoiceOver
 speech and enhanced accessibility settings remain unverified. See
 [GUI review](HIG_GUI_REVIEW_2026-09-21.md) for exact coverage.
 
+Source: [Guideline 2.1](https://developer.apple.com/app-store/review/guidelines/#app-completeness).
+These are validation limits, not a claim that every listed test is an Apple
+submission requirement.
+
 ### MANUAL — Rights and regional obligations
 
 Existing content-rights, trader and age-rating declarations were retained.
@@ -66,6 +82,8 @@ Current storefront availability shows 148 available and 27 unavailable regions.
 The developer must confirm applicable third-party content rights and regional
 obligations; the preflight does not establish legal authorization for arbitrary
 websites loaded by users.
+
+Source: [Guideline 5 and 5.2](https://developer.apple.com/app-store/review/guidelines/#legal).
 
 ## Passed checks
 
@@ -91,8 +109,9 @@ websites loaded by users.
 
 6. **Upload and selection:** successful export/upload, Apple processing completed,
    and build 8 selected and saved in the App Store draft.
-7. **Screenshots:** two current images registered separately for Japanese and
-   English (US), with main window first and Settings second.
+7. **Screenshots:** all four files are RGB PNG at 1440 x 900. Japanese and
+   English thumbnails were visually verified after upload; Add for Review now
+   accepts the images. Registration counts alone were not sufficient evidence.
 
 **NOT APPLICABLE:** developer-operated accounts, account deletion, IAP,
 subscriptions, ads and tracking. Third-party websites can have their own accounts
@@ -132,5 +151,7 @@ and policies; these are distinct from developer-operated app features.
 Confirm contact details, relevant runtime coverage and rights/regional items
 before submission. The selected 1.1.2 (8) is the build uploaded from the audited
 archive; TestFlight processing and the saved draft selection were verified.
-The App Store version remains Prepare for Submission.
-**No submission action was performed.**
+The App Store version remains Prepare for Submission, with one Ready for Review
+item in the submission draft. Add for Review succeeded at 12:29 JST.
+**Final Submit for Review has not been performed.** The preflight skill requires
+confirmation after presenting the remaining warning and manual items.
