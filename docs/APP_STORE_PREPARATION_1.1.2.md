@@ -4,36 +4,38 @@
 - Version / build: 1.1.2 / 8
 - Submission type: Update
 - Guidelines checked: last updated June 8, 2026; retrieved September 21, 2026
-- Readiness: **NOT READY**
-- Counts: BLOCKER 2 / WARNING 1 / MANUAL 3 / PASS 5 / NOT APPLICABLE 1
+- Readiness: **READY WITH MANUAL CONFIRMATIONS**
+- Counts: BLOCKER 0 / WARNING 1 / MANUAL 3 / PASS 7 / NOT APPLICABLE 1
 
 ## Actionable findings
 
-### BLOCKER — Build upload and selection
+### Resolved — Build upload and selection
 
-The Release archive succeeded, but export/upload exited 70 with
-`error: exportArchive Failed to Use Accounts`. Xcode reports that App Store
-Connect access is required for the configured team. The 1.1.2 draft has no build.
-The account holder must complete Xcode setup and refresh Apple Accounts sign-in.
-Then retry export from the existing archive, verify successful upload and Apple
-processing, select build 8, and save. These are separate completion gates.
+After the account holder refreshed Xcode sign-in, the retry succeeded at
+2026-09-21 12:22 JST (`Upload succeeded`, `EXPORT SUCCEEDED`, exit 0).
+TestFlight shows version 1.1.2 build 8 as Ready to Submit after Apple processing.
+Build 8 was selected and saved in the 1.1.2 App Store draft. The upload date shown
+by App Store Connect is September 21, 2026, 12:22.
+
+- App Store Connect build ID: `188b147e-39c5-44ab-9f75-376c6054ffd7`.
+- Uploaded archive executable SHA-256:
+  `57e9510a493780bab608f550320e6d1d8e889853e45c0ed1cae78e6859657933`.
+- Final upload evidence: `.xcode-derived/appstore-1.1.2-8/upload-retry-latest.log`.
 
 Source: [Upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/).
 
-### BLOCKER — Screenshot replacement incomplete (2.3 metadata)
+### Resolved — Screenshot replacement (2.3 metadata)
 
-Two current screenshots per locale are prepared in `AppStoreAssets/Screenshots`
-(`01-three-column-workspace.png` and `03-column-settings.png`). The in-app
-browser's documented file chooser timed out both through the upload button and
-the file input. Native access to the Codex host app is prohibited by the tool.
-No current screenshot upload succeeded.
+Japanese and English (US) each show **2 / 10** current screenshots, in this order:
+`01-three-column-workspace.png`, `03-column-settings.png`. These are the current
+assets in `AppStoreAssets/Screenshots`. English uses its own localized images,
+not inherited Japanese images. Published 1.1.1 was not changed.
 
-The Japanese draft's inherited screenshots were removed before the upload
-attempt and it currently shows **0 / 10**. English retains its three inherited
-1.1.1 screenshots. Published 1.1.1 was not changed. Upload the two current images
-for Japanese, replace the three old English images with the two current ones,
-and verify both locales show the intended order and no processing errors.
-Do not upload either legacy `02-research-dashboard.png` file.
+The earlier file chooser failure was resolved with the supported browser chooser
+flow. Each image was uploaded separately to preserve order. When removing all
+English images, App Store Connect temporarily inherited Japanese images; Edit
+was used to enable a custom English set before uploading. The legacy
+`02-research-dashboard.png` files were not uploaded.
 
 Source: [App Review Guidelines, 2.3](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata).
 
@@ -70,7 +72,7 @@ websites loaded by users.
 1. **Build integrity:** archive succeeded with Xcode 27.0 (27A266a), macOS 27.0
    (26A428), macOS 14 deployment target, arm64 and x86_64. Archive signature passes
    strict verification. Bundle identity and versions are st.rio.tricolumns,
-   1.1.2 and 8. Distribution export remains blocked as above.
+   1.1.2 and 8. Distribution export/upload succeeded after authentication.
 2. **Regression checks:** Release tests passed, 46 tests / 0 failures. GUI
    behavior and accessibility names were inspected; this is not a claim of full
    accessibility conformance.
@@ -87,6 +89,11 @@ websites loaded by users.
    currently published 1.1.1 (7) was observed as Ready for Distribution. All
    displayed prices, including Japan and US, were zero.
 
+6. **Upload and selection:** successful export/upload, Apple processing completed,
+   and build 8 selected and saved in the App Store draft.
+7. **Screenshots:** two current images registered separately for Japanese and
+   English (US), with main window first and Settings second.
+
 **NOT APPLICABLE:** developer-operated accounts, account deletion, IAP,
 subscriptions, ads and tracking. Third-party websites can have their own accounts
 and policies; these are distinct from developer-operated app features.
@@ -96,7 +103,7 @@ and policies; these are distinct from developer-operated app features.
 | Family | Status | Evidence or reason |
 |---|---|---|
 | Safety | MANUAL | General browser; existing age/content declarations retained. |
-| Performance | BLOCKER / PASS | Archive and tests pass; upload and build selection pending. |
+| Performance | PASS | Archive/tests pass; upload, processing and build selection complete. |
 | Business | PASS / N/A | Free app; no developer purchases or subscriptions. |
 | Design | PASS / MANUAL | Native GUI inspected; documented runtime coverage limits. |
 | Legal | PASS / MANUAL | Privacy paths and declaration checked; rights/regional review remains. |
@@ -114,6 +121,7 @@ and policies; these are distinct from developer-operated app features.
   native sources, localizations, tests, privacy policies and release notes.
 - Local ignored evidence: `.xcode-derived/appstore-1.1.2-8/`, containing
   `TriColumns.xcarchive`, `archive.log`, `tests.log`, `upload.log`,
+  `upload-retry-latest.log`,
   `ExportOptions.plist`, `preflight-inventory.json` and screenshot layouts.
 - Archive app: `.xcode-derived/appstore-1.1.2-8/TriColumns.xcarchive/Products/Applications/TriColumns.app`.
 - [Japanese policy](https://github.com/rioriost/TriColumns/blob/main/docs/PRIVACY_POLICY.md)
@@ -121,7 +129,8 @@ and policies; these are distinct from developer-operated app features.
 
 ## Final gate
 
-Resolve build upload/processing/selection and screenshot registration, then
-confirm contact details, relevant runtime coverage and rights/regional items.
-There is no selected 1.1.2 build to audit yet; only the local archive was audited.
+Confirm contact details, relevant runtime coverage and rights/regional items
+before submission. The selected 1.1.2 (8) is the build uploaded from the audited
+archive; TestFlight processing and the saved draft selection were verified.
+The App Store version remains Prepare for Submission.
 **No submission action was performed.**
