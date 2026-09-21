@@ -31,7 +31,8 @@ reported screenshots still uploading, and visual inspection showed failed image
 tiles. The files had JPEG data with PNG extensions. All four files were converted
 to actual RGB PNG (1440 x 900), replaced, and visually verified in both locales.
 Add for Review then succeeded; the draft lists 1.1.2 (8) as Ready for Review.
-The final Submit for Review control is available and has not been clicked.
+Final submission was subsequently completed after explicit user confirmation;
+see the final gate below.
 
 Intended Japanese and English (US) order:
 `01-three-column-workspace.png`, `03-column-settings.png`. These are the current
@@ -146,12 +147,19 @@ and policies; these are distinct from developer-operated app features.
 - [Japanese policy](https://github.com/rioriost/TriColumns/blob/main/docs/PRIVACY_POLICY.md)
   and [support](https://github.com/rioriost/TriColumns/issues).
 
-## Final gate
+## Final gate and submission result
 
-Confirm contact details, relevant runtime coverage and rights/regional items
-before submission. The selected 1.1.2 (8) is the build uploaded from the audited
-archive; TestFlight processing and the saved draft selection were verified.
-The App Store version remains Prepare for Submission, with one Ready for Review
-item in the submission draft. Add for Review succeeded at 12:29 JST.
-**Final Submit for Review has not been performed.** The preflight skill requires
-confirmation after presenting the remaining warning and manual items.
+The warning and three manual coverage items above were presented to the user.
+The user explicitly confirmed submission. These remain evidence limits; user
+confirmation does not independently establish untested behavior or legal facts.
+
+Final Submit for Review succeeded on **2026-09-21 at 12:32 JST**.
+App Store Connect displayed “1項目が提出されました” and the macOS 1.1.2 row
+changed to **審査待ち / Waiting for Review**. The submission contains the selected
+1.1.2 (8) build. The submission draft count is now zero.
+
+- Submission ID: `7843c8ea-602b-4be1-b0ac-d3deab51601e`.
+- [App Review submission](https://appstoreconnect.apple.com/apps/6791172657/distribution/reviewsubmissions/details/7843c8ea-602b-4be1-b0ac-d3deab51601e).
+- Release setting: automatically release after approval, all users, retain ratings.
+- Approval and publication have **not** been observed. Waiting for Review is not
+  approval or release.
