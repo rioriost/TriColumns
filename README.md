@@ -51,6 +51,22 @@ TRICOLUMNS_RELOAD_SECONDS=3600 swift run TriColumns
 
 Set the value to `0` to disable automatic reload.
 
+## Keyboard and Interface
+
+The **Navigate** menu operates on the column containing keyboard focus:
+
+- **⌘1 / ⌘2 / ⌘3** selects a column’s address field.
+- **⌘L** selects the current column’s address; **⌘R** reloads its page.
+- **⌘[ / ⌘]** goes back or forward in that column.
+- **⌘,** opens Settings. Tab and Shift-Tab move between URL fields;
+  Return saves and Escape cancels.
+
+Column headers use system symbols, localized accessibility labels, and larger
+address text. Empty columns offer an address-entry action. The main window has a
+960 × 480 pt minimum content size to keep all three columns’ controls available.
+
+See [GUI verification](docs/HIG_GUI_REVIEW_2026-09-21.md) for evidence and limits.
+
 ## Browser Integration
 
 - Native image and video file selection, including multiple selection.
@@ -95,6 +111,7 @@ Privacy policies: [日本語](docs/PRIVACY_POLICY.md) / [English](docs/PRIVACY_P
 See [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
 The [September 2026 review](docs/DESIGN_CODE_REVIEW_2026-09-16.md) records the
 issues addressed in [1.1.1](docs/RELEASE_NOTES_1.1.1.md).
+The GUI improvements are documented in [1.1.2](docs/RELEASE_NOTES_1.1.2.md).
 
 ## License
 

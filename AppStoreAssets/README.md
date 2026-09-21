@@ -8,13 +8,20 @@ interface, trademarks, or user content of any third-party service.
 ## Screenshot set
 
 - `Screenshots/en-US/01-three-column-workspace.png`
-- `Screenshots/en-US/02-research-dashboard.png`
 - `Screenshots/en-US/03-column-settings.png`
 - `Screenshots/ja/01-three-column-workspace.png`
-- `Screenshots/ja/02-research-dashboard.png`
 - `Screenshots/ja/03-column-settings.png`
 
-All screenshots are captured from the shipping TriColumns app at 1440 x 900.
+The current set shows version 1.1.2 (8). Native screenshots of the archived
+binary were taken in isolated, locale-specific app copies with fictional sample
+content. The main window capture is proportionally fitted to a 1440 x 900 canvas;
+the Settings capture is centered on the same canvas. These are composed assets,
+not full-resolution 1440 x 900 native captures. No controls or app content were
+retouched. The isolated copies used different bundle IDs and ad-hoc signatures
+to avoid changing the installed app's preferences or website sessions.
+
+The two `02-research-dashboard.png` files are legacy 1.1.1 assets and must not be
+uploaded for 1.1.2. See the release preparation record for upload status.
 App Preview video is intentionally omitted because it is optional.
 
 ## Demo image provenance

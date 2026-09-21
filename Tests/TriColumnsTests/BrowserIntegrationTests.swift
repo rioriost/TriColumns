@@ -33,6 +33,33 @@ final class BrowserIntegrationTests: XCTestCase {
         }
     }
 
+    func testAddressFocusIdentifiesOnlyTheSelectedColumn() throws {
+        let first = try makeColumn()
+        let second = try makeColumn()
+        defer { first.shutDown(); second.shutDown() }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 960, height: 480),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        let stack = NSStackView(views: [first, second])
+        stack.distribution = .fillEqually
+        window.contentView = stack
+        defer { window.close() }
+
+        second.focusAddress()
+        XCTAssertTrue(second.containsKeyboardFocus)
+        XCTAssertFalse(first.containsKeyboardFocus)
+        first.focusAddress()
+        XCTAssertTrue(first.containsKeyboardFocus)
+        XCTAssertFalse(second.containsKeyboardFocus)
+
+        // A browser command must not mistake a separate dialog's editor for a column.
+        let otherField = NSTextField(string: "dialog")
+        window.contentView = otherField
+        window.makeFirstResponder(otherField)
+        XCTAssertFalse(first.containsKeyboardFocus)
+        XCTAssertFalse(second.containsKeyboardFocus)
+    }
+
     func testColumnUsesIsolatedSafetyAndFailsClosedDuringNavigation() async throws {
         let column = try makeColumn()
         defer { column.shutDown() }

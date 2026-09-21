@@ -30,3 +30,19 @@
 "settings.discard.title" = "Leave the changed columns?";
 "settings.discard.message" = "One or more changed columns may contain unsaved work or an ongoing operation. Applying these URLs will leave those pages. Unchanged columns will stay as they are.";
 "refresh.unavailable" = "Automatic refresh is unavailable";
+
+"navigation.address.placeholder" = "Enter a website address";
+"navigation.address.label" = "%@ web address";
+"navigation.back" = "Back";
+"navigation.forward" = "Forward";
+"navigation.reload" = "Reload Page";
+"navigation.open_address" = "Open Location…";
+"navigation.focus_column" = "Column %d Address";
+"column.empty.title" = "Open a website";
+"column.empty.hint" = "Enter an address above to browse here. Set a starting page in Settings.";
+"settings.pages.title" = "Starting Pages";
+"settings.pages.hint" = "Set an HTTP or HTTPS address for each column, or leave it blank. Saving opens only the pages you change.";
+"menu.navigation" = "Navigate";
+"menu.window" = "Window";
+"menu.minimize" = "Minimize";
+"menu.zoom" = "Zoom";

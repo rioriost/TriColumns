@@ -144,9 +144,10 @@ private final class PopupWindowController: NSWindowController, NSWindowDelegate 
 final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTextFieldDelegate {
     private let titleLabel = NSTextField(labelWithString: "")
     private let addressField = NSTextField(string: "")
-    private let backButton = NSButton(title: "‹", target: nil, action: nil)
-    private let forwardButton = NSButton(title: "›", target: nil, action: nil)
-    private let reloadButton = NSButton(title: "↻", target: nil, action: nil)
+    private let backButton = NSButton()
+    private let forwardButton = NSButton()
+    private let reloadButton = NSButton()
+    private let emptyState = NSStackView()
     let webView: WKWebView
     private let failureLabel = NSTextField(wrappingLabelWithString: "")
     private let failureBar = NSStackView()
@@ -180,20 +181,39 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
         super.init(frame: .zero)
 
         wantsLayer = true
-        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
 
         titleLabel.stringValue = spec.title
-        titleLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
+        titleLabel.textColor = .secondaryLabelColor
         titleLabel.lineBreakMode = .byTruncatingTail
 
         addressField.stringValue = spec.address
-        addressField.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        addressField.font = .systemFont(ofSize: NSFont.systemFontSize)
+        addressField.placeholderString = L10n.string("navigation.address.placeholder")
+        addressField.setAccessibilityLabel(L10n.format("navigation.address.label", spec.title))
+        addressField.setAccessibilityIdentifier("address-\(spec.title)")
+        addressField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        addressField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         addressField.lineBreakMode = .byTruncatingMiddle
         addressField.delegate = self
 
-        for button in [backButton, forwardButton, reloadButton] {
-            button.bezelStyle = .texturedRounded
+        for (button, symbol, key) in [
+            (backButton, "chevron.backward", "navigation.back"),
+            (forwardButton, "chevron.forward", "navigation.forward"),
+            (reloadButton, "arrow.clockwise", "navigation.reload")
+        ] {
+            let label = L10n.string(key)
+            button.title = label
+            button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
+            button.imagePosition = .imageOnly
+            button.bezelStyle = .accessoryBarAction
+            button.toolTip = label
+            button.setAccessibilityLabel("\(spec.title): \(label)")
             button.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                button.widthAnchor.constraint(equalToConstant: 28),
+                button.heightAnchor.constraint(equalToConstant: 28)
+            ])
         }
 
         backButton.target = self
@@ -205,24 +225,34 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
 
         configure(webView)
 
-        let toolbar = NSStackView(views: [backButton, forwardButton, reloadButton, titleLabel, addressField])
+        let toolbar = NSStackView(views: [backButton, forwardButton, addressField, reloadButton])
         toolbar.orientation = .horizontal
         toolbar.alignment = .centerY
         toolbar.spacing = 6
-        toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+        toolbar.edgeInsets = NSEdgeInsets(top: 0, left: 10, bottom: 8, right: 10)
         toolbar.translatesAutoresizingMaskIntoConstraints = false
 
         let retryButton = NSButton(title: L10n.string("button.retry"), target: self, action: #selector(retryNavigation))
-        failureLabel.font = .systemFont(ofSize: 11)
+        retryButton.bezelStyle = .rounded
+        failureLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         failureLabel.maximumNumberOfLines = 3
         failureLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         failureBar.orientation = .horizontal
         failureBar.spacing = 6
         failureBar.edgeInsets = NSEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
+        let failureIcon = NSImageView(image: NSImage(
+            systemSymbolName: "exclamationmark.triangle", accessibilityDescription: nil)!)
+        failureIcon.contentTintColor = .secondaryLabelColor
+        failureIcon.setAccessibilityHidden(true)
+        failureBar.addArrangedSubview(failureIcon)
         failureBar.addArrangedSubview(failureLabel)
         failureBar.addArrangedSubview(retryButton)
         failureBar.isHidden = true
-        let header = NSStackView(views: [toolbar, failureBar])
+        let identity = NSStackView(views: [titleLabel])
+        identity.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 4, right: 12)
+        let divider = NSBox()
+        divider.boxType = .separator
+        let header = NSStackView(views: [identity, toolbar, failureBar, divider])
         header.orientation = .vertical
         header.alignment = .leading
         header.spacing = 0
@@ -232,19 +262,40 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
         addSubview(header)
         addSubview(webView)
 
+        let emptyIcon = NSImageView(image: NSImage(
+            systemSymbolName: "globe", accessibilityDescription: nil)!)
+        emptyIcon.contentTintColor = .secondaryLabelColor
+        emptyIcon.imageScaling = .scaleProportionallyUpOrDown
+        emptyIcon.setAccessibilityHidden(true)
+        let emptyTitle = NSTextField(labelWithString: L10n.string("column.empty.title"))
+        emptyTitle.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        let emptyHint = NSTextField(wrappingLabelWithString: L10n.string("column.empty.hint"))
+        emptyHint.alignment = .center
+        emptyHint.textColor = .secondaryLabelColor
+        let openButton = NSButton(title: L10n.string("navigation.open_address"),
+                                  target: self, action: #selector(focusAddress))
+        openButton.bezelStyle = .rounded
+        emptyState.orientation = .vertical
+        emptyState.spacing = 12
+        [emptyIcon, emptyTitle, emptyHint, openButton].forEach(emptyState.addArrangedSubview)
+        emptyState.translatesAutoresizingMaskIntoConstraints = false
+        emptyState.isHidden = true
+        addSubview(emptyState)
+
         NSLayoutConstraint.activate([
             header.topAnchor.constraint(equalTo: topAnchor),
             header.leadingAnchor.constraint(equalTo: leadingAnchor),
             header.trailingAnchor.constraint(equalTo: trailingAnchor),
             toolbar.widthAnchor.constraint(equalTo: header.widthAnchor),
             failureBar.widthAnchor.constraint(equalTo: header.widthAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: 38),
-
-            titleLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 72),
-            titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 140),
-            backButton.widthAnchor.constraint(equalToConstant: 30),
-            forwardButton.widthAnchor.constraint(equalToConstant: 30),
-            reloadButton.widthAnchor.constraint(equalToConstant: 30),
+            divider.widthAnchor.constraint(equalTo: header.widthAnchor),
+            addressField.heightAnchor.constraint(greaterThanOrEqualToConstant: 28),
+            emptyIcon.widthAnchor.constraint(equalToConstant: 32),
+            emptyIcon.heightAnchor.constraint(equalToConstant: 32),
+            emptyState.centerXAnchor.constraint(equalTo: webView.centerXAnchor),
+            emptyState.centerYAnchor.constraint(equalTo: webView.centerYAnchor),
+            emptyState.widthAnchor.constraint(lessThanOrEqualToConstant: 280),
+            emptyState.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, constant: -40),
 
             webView.topAnchor.constraint(equalTo: header.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -259,6 +310,26 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+    }
+
+    @objc func focusAddress() {
+        window?.makeFirstResponder(addressField)
+        addressField.selectText(nil)
+    }
+
+    var containsKeyboardFocus: Bool {
+        let responder = window?.firstResponder
+        if let editor = responder as? NSTextView, editor.isFieldEditor,
+           let field = editor.delegate as? NSView {
+            return field.isDescendant(of: self)
+        }
+        return (responder as? NSView)?.isDescendant(of: self) == true
     }
 
     func controlTextDidEndEditing(_ notification: Notification) {
@@ -279,6 +350,9 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
             } else {
                 addressField.stringValue = webView.url?.absoluteString ?? addressField.stringValue
             }
+            let isEmpty = webView.url?.absoluteString == "about:blank"
+            emptyState.isHidden = !isEmpty
+            webView.isHidden = isEmpty
             addressField.toolTip = webView.url?.scheme == "http" ? L10n.string("navigation.insecure") : nil
             addressField.textColor = webView.url?.scheme == "http" ? .systemOrange : .labelColor
             updateNavigationButtons()
@@ -291,6 +365,8 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
         navigationStates[ObjectIdentifier(webView)] = NavigationState(navigation: navigation)
         if webView === self.webView {
             failureBar.isHidden = true
+            emptyState.isHidden = true
+            webView.isHidden = false
             failedURL = nil
         }
     }
@@ -457,15 +533,15 @@ final class BrowserColumnView: NSView, WKNavigationDelegate, WKUIDelegate, NSTex
         }
     }
 
-    @objc private func goBack() {
+    @objc func goBack() {
         webView.goBack()
     }
 
-    @objc private func goForward() {
+    @objc func goForward() {
         webView.goForward()
     }
 
-    @objc private func reload() {
+    @objc func reload() {
         if configuredAddress.isEmpty {
             loadConfiguredAddress("")
         } else {
@@ -674,7 +750,7 @@ private final class SettingsWindowController: NSWindowController {
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 210),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 310),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -687,15 +763,21 @@ private final class SettingsWindowController: NSWindowController {
             let label = NSTextField(labelWithString: L10n.format("column.title", index + 1))
             label.alignment = .right
             field.placeholderString = "https://example.com/"
-            field.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+            field.font = .systemFont(ofSize: NSFont.systemFontSize)
+            field.setAccessibilityLabel(L10n.format("navigation.address.label", label.stringValue))
+            field.heightAnchor.constraint(greaterThanOrEqualToConstant: 28).isActive = true
             return [label, field]
         }
 
         let grid = NSGridView(views: rows)
+        for index in addressFields.indices {
+            grid.row(at: index).height = 28
+            grid.row(at: index).yPlacement = .center
+        }
         grid.rowSpacing = 12
         grid.columnSpacing = 12
         grid.column(at: 0).xPlacement = .trailing
-        grid.column(at: 1).width = 460
+        grid.column(at: 1).xPlacement = .fill
         grid.translatesAutoresizingMaskIntoConstraints = false
 
         let cancelButton = NSButton(
@@ -704,6 +786,7 @@ private final class SettingsWindowController: NSWindowController {
             action: #selector(cancel)
         )
         cancelButton.keyEquivalent = "\u{1b}"
+        cancelButton.bezelStyle = .rounded
 
         let saveButton = NSButton(
             title: L10n.string("button.save"),
@@ -720,20 +803,39 @@ private final class SettingsWindowController: NSWindowController {
         buttons.spacing = 8
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
+        let heading = NSTextField(labelWithString: L10n.string("settings.pages.title"))
+        heading.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        let explanation = NSTextField(wrappingLabelWithString: L10n.string("settings.pages.hint"))
+        explanation.textColor = .secondaryLabelColor
+        let intro = NSStackView(views: [heading, explanation])
+        intro.orientation = .vertical
+        intro.alignment = .leading
+        intro.spacing = 6
+        intro.translatesAutoresizingMaskIntoConstraints = false
         let contentView = NSView()
+        contentView.addSubview(intro)
         contentView.addSubview(grid)
         contentView.addSubview(buttons)
         window.contentView = contentView
 
         NSLayoutConstraint.activate([
-            grid.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            intro.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            intro.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            intro.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            explanation.widthAnchor.constraint(equalTo: intro.widthAnchor),
+            grid.topAnchor.constraint(equalTo: intro.bottomAnchor, constant: 20),
             grid.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             grid.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            buttons.topAnchor.constraint(equalTo: grid.bottomAnchor, constant: 24),
+            buttons.topAnchor.constraint(greaterThanOrEqualTo: grid.bottomAnchor, constant: 24),
             buttons.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             buttons.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
 
+        let keyViews: [NSView] = addressFields + [cancelButton, saveButton]
+        for index in keyViews.indices {
+            keyViews[index].nextKeyView = keyViews[(index + 1) % keyViews.count]
+        }
+        window.initialFirstResponder = addressFields.first
         update(addresses: addresses)
         window.center()
     }
@@ -791,7 +893,10 @@ private final class SettingsWindowController: NSWindowController {
         alert.informativeText = L10n.format("settings.invalid_url.message", column)
         alert.addButton(withTitle: L10n.string("button.ok"))
         if let window {
-            alert.beginSheetModal(for: window)
+            alert.beginSheetModal(for: window) { [weak self] _ in
+                guard let self else { return }
+                self.addressFields[column - 1].selectText(nil)
+            }
         } else {
             alert.runModal()
         }
@@ -799,7 +904,7 @@ private final class SettingsWindowController: NSWindowController {
 }
 
 @MainActor
-private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
     private var window: NSWindow?
     private var columns: [BrowserColumnView] = []
     private var settingsWindowController: SettingsWindowController?
@@ -873,6 +978,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             defer: false
         )
         window.title = "TriColumns"
+        window.contentMinSize = NSSize(width: 960, height: 480)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = columnStack
@@ -1109,7 +1215,64 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         addEditItem(L10n.string("menu.select_all"), action: "selectAll:", key: "a", to: editMenu)
         editMenuItem.submenu = editMenu
 
+        let navigationMenu = NSMenu(title: L10n.string("menu.navigation"))
+        let navigationItem = NSMenuItem(title: navigationMenu.title, action: nil, keyEquivalent: "")
+        navigationItem.submenu = navigationMenu
+        mainMenu.addItem(navigationItem)
+        for (key, action, shortcut) in [
+            ("navigation.back", #selector(navigateBack), "["),
+            ("navigation.forward", #selector(navigateForward), "]"),
+            ("navigation.reload", #selector(reloadColumn), "r"),
+            ("navigation.open_address", #selector(focusCurrentAddress), "l")
+        ] {
+            let item = NSMenuItem(title: L10n.string(key), action: action, keyEquivalent: shortcut)
+            item.target = self
+            navigationMenu.addItem(item)
+        }
+        navigationMenu.addItem(.separator())
+        for index in 0..<3 {
+            let item = NSMenuItem(title: L10n.format("navigation.focus_column", index + 1),
+                                  action: #selector(focusColumn(_:)), keyEquivalent: "\(index + 1)")
+            item.tag = index
+            item.target = self
+            navigationMenu.addItem(item)
+        }
+
+        let windowMenu = NSMenu(title: L10n.string("menu.window"))
+        let windowItem = NSMenuItem(title: windowMenu.title, action: nil, keyEquivalent: "")
+        windowItem.submenu = windowMenu
+        mainMenu.addItem(windowItem)
+        addEditItem(L10n.string("menu.minimize"), action: "performMiniaturize:", key: "m", to: windowMenu)
+        addEditItem(L10n.string("menu.zoom"), action: "performZoom:", key: "", to: windowMenu)
+        NSApp.windowsMenu = windowMenu
         NSApp.mainMenu = mainMenu
+    }
+
+    private var activeColumn: BrowserColumnView? {
+        columns.first(where: \.containsKeyboardFocus) ?? columns.first
+    }
+
+    @objc private func focusColumn(_ sender: NSMenuItem) {
+        guard columns.indices.contains(sender.tag) else { return }
+        columns[sender.tag].focusAddress()
+    }
+
+    @objc private func focusCurrentAddress() { activeColumn?.focusAddress() }
+    @objc private func navigateBack() { activeColumn?.goBack() }
+    @objc private func navigateForward() { activeColumn?.goForward() }
+    @objc private func reloadColumn() { activeColumn?.reload() }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(navigateBack):
+            return NSApp.keyWindow === window && activeColumn?.webView.canGoBack == true
+        case #selector(navigateForward):
+            return NSApp.keyWindow === window && activeColumn?.webView.canGoForward == true
+        case #selector(reloadColumn), #selector(focusCurrentAddress), #selector(focusColumn(_:)):
+            return NSApp.keyWindow === window && !columns.isEmpty
+        default:
+            return true
+        }
     }
 
     private func addEditItem(
