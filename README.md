@@ -6,6 +6,9 @@ the app.
 
 ## Build
 
+The Xcode app target builds for Apple silicon (`arm64` / AArch64) only in both
+Debug and Release, including archives. Intel (`x86_64`) builds are not supported.
+
 Generate the Xcode project and build the app:
 
 ```sh
@@ -19,10 +22,11 @@ For a local Release build installed at `/Applications/TriColumns.app`:
 scripts/install_app.sh
 ```
 
-The Swift Package remains available for compiler checks:
+The Swift Package remains available for compiler checks; select `arm64`
+explicitly:
 
 ```sh
-swift build
+swift build --arch arm64
 ```
 
 ## Columns
@@ -43,7 +47,7 @@ By default, non-empty columns reload every 30 minutes. Override the interval in
 seconds when running the Swift Package directly:
 
 ```sh
-TRICOLUMNS_RELOAD_SECONDS=3600 swift run TriColumns
+TRICOLUMNS_RELOAD_SECONDS=3600 swift run --arch arm64 TriColumns
 ```
 
 Set the value to `0` to disable automatic reload.

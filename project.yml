@@ -28,6 +28,7 @@ targets:
         buildPhase: resources
     settings:
       base:
+        ARCHS: arm64
         PRODUCT_BUNDLE_IDENTIFIER: st.rio.tricolumns
         PRODUCT_NAME: TriColumns
         INFOPLIST_FILE: AppBundle/Info.plist
